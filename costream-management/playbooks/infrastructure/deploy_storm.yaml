@@ -1,0 +1,275 @@
+#=============================================================================
+#===== This playbook installs and runs Storm on a given cluster ==============
+#=============================================================================
+- name: Prepare Storm installation
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Add rules to {{cluster_name}}_sec_group
+    os_security_group_rule:
+        security_group: "{{cluster_name}}_sec_group"
+        protocol: "{{ item.protocol }}"
+        port_range_min: "{{ item.port }}"
+        port_range_max: "{{ item.port }}"
+        remote_ip_prefix: 0.0.0.0/0
+        direction: "{{ item.direction }}"
+    with_items:
+    - { direction: ingress, protocol: tcp, port: 2181 }
+    - { direction: ingress, protocol: tcp, port: 8081 }
+    - { direction: ingress, protocol: tcp, port: 6627 }
+    - { direction: ingress, protocol: tcp, port: 8080 }
+    - { direction: egress,  protocol: tcp, port: 2181 }
+    - { direction: egress, protocol: tcp, port: 8081 }
+    - { direction: egress, protocol: tcp, port: 6627 }
+    - { direction: egress, protocol: tcp, port: 8080 }
+    when: is_openstack == "true"
+    ignore_errors: yes
+
+  - name: Add rules to {{cluster_name}}_sec_group
+    os_security_group_rule:
+        security_group: "{{cluster_name}}_sec_group"
+        protocol: tcp
+        port_range_min: 6700
+        port_range_max: 6800
+        remote_ip_prefix: 0.0.0.0/0
+        direction: ingress
+    with_items:
+      - { direction: ingress, protocol: tcp, port_lower: 6700, port_upper: 6800 }
+      - { direction: egress, protocol: tcp, port_lower: 6700, port_upper: 6800 }
+    when: is_openstack == "true"
+    ignore_errors: yes
+
+#=============================================================================
+#=============================================================================
+- name: Installing und running Apache Storm
+  hosts: servers
+  become: true
+  gather_facts: true
+  tasks:
+
+  - name: Delete if storm already exists
+    file:
+      path: "{{remote_prefix}}/storm/"
+      state: absent
+
+  #- name: Get Storm - sometimes this does not terminate for an unknown reason
+  #  unarchive:
+  #    src: https://archive.apache.org/dist/storm/apache-storm-2.4.0/apache-storm-2.4.0.tar.gz
+  #    dest: "{{remote_prefix}}"
+  #    remote_src: yes
+  #    owner: "{{user}}"
+  #    group: "{{group}}"
+  #  # when: storm_path.exists == False
+
+  - name: Download Apache Storm
+    command: "sudo wget https://archive.apache.org/dist/storm/apache-storm-2.4.0/apache-storm-2.4.0.tar.gz -P {{remote_prefix}}"
+
+  - name: Extract Apache Storm
+    command: "sudo tar -xzf {{remote_prefix}}/apache-storm-2.4.0.tar.gz -C {{remote_prefix}}"
+
+  - name: Copy the storm files into existing folder
+    command: sudo cp -Rp {{ remote_prefix }}/apache-storm-2.4.0/. {{ remote_prefix }}/storm/
+    # when: not storm_path.exists
+
+  - name: Remove empty archive folder
+    file:
+      path: "{{remote_prefix}}/apache-storm-2.4.0.tar.gz/"
+      state: absent
+
+  - name: Remove old folder
+    file:
+     path: "{{remote_prefix}}/apache-storm-2.4.0"
+     state: absent
+
+  - name: Create tmp-folder
+    file:
+      path: /tmp/storm
+      state: directory
+      owner: "{{user}}"
+      group: "{{group}}"
+    ignore_errors: yes
+  - name: Create entry for master in storm.yaml
+    lineinfile:
+      dest: "{{remote_prefix}}/storm/conf/storm.yaml"
+      line: "storm.zookeeper.servers: \n  - \"{{item}}\""
+    with_inventory_hostnames:
+    - master
+    when: is_openstack == "true"
+
+  - name: Create entry for zookeeper service in storm.yaml
+    lineinfile:
+      dest: "{{remote_prefix}}/storm/conf/storm.yaml"
+      line: "storm.zookeeper.servers: \n  - \"{{hostvars[groups['master'][0]].ansible_hostname}}\""
+    with_inventory_hostnames:
+      - master
+    when: is_openstack != "true"
+
+  - name: Create entry for local directory in storm.yaml
+    lineinfile:
+      dest: "{{ remote_prefix }}/storm/conf/storm.yaml"
+      line: "storm.local.dir: /tmp/storm"
+
+  - name: Specify nimbus seeds for OpenStack
+    lineinfile:
+      dest: "{{ remote_prefix }}/storm/conf/storm.yaml"
+      line: "nimbus.seeds: [\"{{ item }}\"]"
+    with_inventory_hostnames:
+    - master
+    when: is_openstack == "true"
+
+  - name: Specify nimbus seeds for CloudLab
+    lineinfile:
+      dest: "{{ remote_prefix }}/storm/conf/storm.yaml"
+      line: "nimbus.seeds: [\"{{hostvars[groups['master'][0]].ansible_hostname}}\"]"
+    when: is_openstack != "true"
+
+  - name: Specify own hostname
+    lineinfile:
+      dest: "{{ remote_prefix }}/storm/conf/storm.yaml"
+      line: "storm.local.hostname: {{hostvars[inventory_hostname].ansible_hostname}}"
+    when: is_openstack != "true"
+
+  - name: Specify UI port
+    lineinfile:
+      dest: "{{ remote_prefix }}/storm/conf/storm.yaml"
+      line: "ui.port: 8081"
+
+  - name: Specify UI host with public address
+    lineinfile:
+      dest: "{{ remote_prefix }}/storm/conf/storm.yaml"
+      line: "ui.host: {{hostvars[groups['master'][0]].ansible_fqdn}}"
+    when: is_openstack != "true"
+
+  - name: Define slot ports (= num of workers)
+    lineinfile:
+      dest: "{{ remote_prefix }}/storm/conf/storm.yaml"
+      line: "supervisor.slots.ports: \n    - 6700"
+
+  - name: Increase worker timeout to avoid too early kill of the workers
+    # https://stackoverflow.com/questions/55024919/resource-clean-up-after-killing-storm-topology
+    lineinfile:
+      dest: "{{ remote_prefix }}/storm/conf/storm.yaml"
+      line: "supervisor.worker.shutdown.sleep.secs: 60"
+
+  - name: Install python
+    apt:
+      name: ["python"]
+      update_cache: yes
+
+  - name: Install programs
+    apt:
+      name: ["python-is-python3"]
+      update_cache: yes
+    when: is_openstack == "true"
+
+  - name: Change Owner of full directory
+    shell: sudo chown -R "{{user}}" "{{ remote_prefix }}"/storm && sudo chown -R "{{user}}" /tmp/storm
+
+  - name: Add storm-directory to $PATH.
+    copy:
+      dest: /etc/profile.d/storm-path.sh
+      content: 'PATH=$PATH:{{ remote_prefix }}/storm/bin/'
+
+#=============================================================================
+#=============================================================================
+- name: Deploy storm service on slaves
+  hosts: slaves
+  gather_facts: false
+  become: true
+  tasks:
+
+  - name: Create a service file for storm supervisor
+    become: yes
+    copy:
+      dest: /etc/systemd/system/storm.service
+      content: |
+        [Unit]
+        Description=Start Storm
+        After=network.target
+  
+        [Service]
+        Type=simple
+        ExecStart={{remote_prefix}}/storm/bin/storm supervisor
+        User={{user}}
+        Group={{group}}
+        StandardOutput=syslog
+        StandardError=syslog
+        SuccessExitStatus=143
+        Restart=always
+  
+        [Install]
+        WantedBy=multi-user.target
+
+  - name: Start storm service
+    systemd: state=started name=storm daemon_reload=yes
+
+- name: Deploy storm service on master
+  hosts: master
+  gather_facts: false
+  become: true
+  tasks:
+
+  - name: Create a service file for storm nimbus
+    become: yes
+    copy:
+      dest: /etc/systemd/system/storm.service
+      content: |
+        [Unit]
+        Description=Start Storm
+        After=network.target
+  
+        [Service]
+        Type=simple
+        ExecStart={{remote_prefix}}/storm/bin/storm nimbus
+        User={{user}}
+        Group={{group}}
+        StandardOutput=syslog
+        StandardError=syslog
+        SuccessExitStatus=143
+        Restart=always
+  
+        [Install]
+        WantedBy=multi-user.target
+
+  - name: Start storm service
+    systemd: state=started name=storm daemon_reload=yes
+
+
+  - name: Create a service file for Storm
+    become: yes
+    copy:
+      dest: /etc/systemd/system/storm_ui.service
+      content: |
+        [Unit]
+        Description=Start Storm
+        After=network.target
+
+        [Service]
+        Type=simple
+        ExecStart={{remote_prefix}}/storm/bin/storm ui
+        User={{user}}
+        Group={{group}}
+        StandardOutput=syslog
+        StandardError=syslog
+        SuccessExitStatus=143
+        Restart=always
+
+        [Install]
+        WantedBy=multi-user.target
+
+  - name: Start storm service
+    systemd: state=started name=storm_ui daemon_reload=yes
+
+  - name: Validate if Storm is up and listening on port 6627
+    wait_for:
+      host: "{{item}}"
+      port: 6627
+      delay: 10
+      timeout: 30
+      state: started
+      msg: "Storm not seem to be running"
+    with_inventory_hostnames:
+      - master
+
+  - debug:
+      msg: "Storm is installed and runs now"

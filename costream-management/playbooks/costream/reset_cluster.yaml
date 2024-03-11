@@ -1,0 +1,95 @@
+#=============================================================================
+# This playbook resets a Storm Cluster. Ongoing query executions are terminated,
+# log-files and the database are cleared. cgroup-settings are restored.
+# Related services are restarted and NTP is reset.
+#=============================================================================
+
+- hosts: master
+  gather_facts: true
+  become: true
+  tasks:
+  - name: Kill ongoing PlanExecutor application
+    shell: "sudo pkill -f PlanExecutor"
+    ignore_errors: yes
+
+  - name: Kill all ongoing storm queries
+    shell: "{{storm_path}}/bin/storm kill `{{storm_path}}/bin/storm list | tail -1 | cut -d ' ' -f 2` -w 0"
+    ignore_errors: yes
+
+  - name: Clear MongoDB collections
+    shell: "mongo -u {{mongo_user}} -p {{mongo_password}} --authenticationDatabase {{mongo_database}} mongodb://{{hostvars[inventory_hostname].ansible_hostname}}/{{mongo_database}} --eval 'db.query_labels.remove({}); db.query_observations.remove({}); db.query_placement.remove({}); db.query_graphs.remove({}); db.query_grouping.remove({}); db.query_offsets.remove({})'"
+    ignore_errors: yes
+
+  - name: Clear previous query executions
+    shell: "rm -r {{storm_path}}/query-executed/*"
+    ignore_errors: yes
+
+  - name: Clear query templates
+    shell: "rm -r {{storm_path}}/query/*"
+    ignore_errors: yes
+
+  - name: Clear all logfiles
+    shell: "rm -r {{storm_path}}/logs/*"
+    ignore_errors: yes
+
+- name: Reset storm on all slaves
+  hosts: slaves
+  gather_facts: false
+  become: true
+  tasks:
+
+  - name: Delete tmp-files
+    shell: "rm -rf {{storm_tmp_path}}* {{zk_tmp_path}}*"
+
+  - name: Clear all logfiles
+    shell: "rm -r {{storm_path}}/logs/*"
+    ignore_errors: yes
+
+  - name: Restart storm service
+    ansible.builtin.systemd:
+      name: storm
+      state: restarted
+
+  - name: Restart NTP
+    ansible.builtin.systemd:
+      name: ntp
+      state: restarted
+
+  - name: Delete existing cgroups
+    shell: "cgdelete -r net_cls,memory,cpu:storm_resources"
+    ignore_errors: yes
+
+  - name: Create cgroup with the name storm_resources for memory, cpu and network
+    shell: "cgcreate -a {{user}}:{{user}} -t {{user}}:{{user}} -g net_cls,memory,cpu,cpuacct:storm_resources"
+
+  - name: Reset netem to 0ms latency and 10Gbits bandwidth
+    shell: "sudo tc qdisc change dev `ip route | grep 192 | cut -d ' ' -f3` root netem delay 0ms rate 10000mbit"
+
+- name: Reset storm on master instance
+  hosts: master
+  gather_facts: false
+  become: true
+
+  tasks:
+  - name: Delete tmp-files
+    shell: "sudo rm -rf {{storm_tmp_path}}* {{zk_tmp_path}}* /tmp/kafka/* /var/bigdata/kafka/logs/*"
+
+  - name: Restart Zookeeper
+    ansible.builtin.systemd:
+      name: zookeeper
+      state: restarted
+
+  - name: Restart Kafka
+    ansible.builtin.systemd:
+      name: kafka
+      state: restarted
+
+  - name: Restart Storm
+    ansible.builtin.systemd:
+      name: storm
+      state: restarted
+
+  - name: Restart NTP
+    ansible.builtin.systemd:
+      name: ntp
+      state: restarted

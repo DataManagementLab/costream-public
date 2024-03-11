@@ -1,0 +1,232 @@
+#=============================================================================
+#===== This playbook waits for instances finished and installs software ======
+#=============================================================================
+- name: Wait for instances boot and install software packages
+  gather_facts: False
+  hosts: servers
+  become: true
+  tasks:
+
+  - name: Wait for connection
+    wait_for_connection:
+      timeout: 500
+
+  - name: Update apt-get repositories and cache
+    apt: update_cache=yes force_apt_get=yes
+
+  - name: Upgrade all apt packages
+    apt: upgrade=dist force_apt_get=yes
+
+  - name: Wait for cloud-init to finish - this can take several minutes
+    raw: while ! test -f /var/lib/cloud/instance/boot-finished; do sleep 1; done
+    retries: 3
+    delay: 3
+    register: result
+    until: result.rc == 0
+    when: is_openstack == "true"
+
+  - name: Create group
+    group:
+      name: "{{group}}"
+      state: present
+
+  - name: Create "{{user}}" on all hosts
+    ansible.builtin.user:
+      name: "{{user}}"
+      group: "{{group}}"
+
+  - name: Install programs
+    apt:
+      name: ["openjdk-8-jdk-headless", "python3-lxml", "python3-pip", "ntpdate", "htop", "python-is-python3"]
+      update_cache: yes
+
+  # Create the remote path where to install big data frameworks
+  - name: Create remote path at "{{remote_prefix}}"
+    file:
+      path: "{{remote_prefix}}"
+      state: directory
+
+  - name: Disable welcome messages
+    shell: sudo chmod -x /etc/update-motd.d/*
+
+  - name: Set a hostname # required for m400 instances, as their hostnames got automatically renamed to `ms0402` etc.
+    ansible.builtin.hostname:
+      name: "{{inventory_hostname}}"
+    when: is_openstack == "false"
+
+#==============================================================================
+#=========== Manage SSH-Keys for intra-node log-ins on OpenStack ==============
+#==============================================================================
+- name: Copy public master key from master
+  hosts: master
+  gather_facts: false
+  tags: key
+  tasks:
+
+  - name: Delete old public key(s)
+    shell: rm -rf ~/.ssh/id_rsa ~/.ssh/id_rsa.pub
+    when: is_openstack == "true"
+
+  - name: Create a new public key
+    shell: ssh-keygen -t rsa -f ~/.ssh/id_rsa -N ''
+    when: is_openstack == "true"
+
+  - name: Copy the key and register at variable masterkey
+    command: cat ~/.ssh/id_rsa.pub
+    register: masterkey
+    when: is_openstack == "true"
+
+  # This is a dummy host, that is needed to move the key on the other servers
+  - name: "Add key to dummy host"
+    add_host:
+      name: "masterkey_holder"
+      key: "{{ masterkey.stdout }}"
+    when: is_openstack == "true"
+
+- name: Paste public master key to all slaves
+  hosts: servers
+  gather_facts: false
+  tasks:
+
+  - name: Insert the master key
+    lineinfile:
+      path: ~/.ssh/authorized_keys
+      line: "{{ hostvars['masterkey_holder']['key'] }}"
+      insertafter: EOF
+    when: is_openstack == "true"
+
+  - name: Copy the etc/host-file to all servers
+    copy:
+      src: "{{ssh_files_path}}/{{cluster_name}}/hosts"
+      dest: /etc/
+      mode: '0777'
+    become: true
+    when: is_openstack == "true"
+
+#==============================================================================
+#=========== Manage SSH-Keys for intra-node log-ins on Cloudlab  ==============
+#=see: http://docs.cloudlab.us/advanced-topics.html#%28part._geni-get-key%29 ==
+#==============================================================================
+- name: Allow access between instances on cloud-lab
+  hosts: servers
+  gather_facts: false
+  tasks:
+  - name: Copy geni-get key to .ssh/id_rsa
+    shell: geni-get key > ~/.ssh/id_rsa
+    when: is_openstack == "false"
+
+  - name: Setting mode 600 for key id_rsa
+    shell: chmod 600 ~/.ssh/id_rsa
+    when: is_openstack == "false"
+
+  - name: Generate public key
+    shell: ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
+    when: is_openstack == "false"
+
+  - name: Copy key to file authorized_keys2
+    shell: grep -q -f ~/.ssh/id_rsa.pub $HOME/.ssh/authorized_keys2 || cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys2
+    when: is_openstack == "false"
+
+#==============================================================================
+#=================================== install NTP =============================
+#==============================================================================
+
+- name: Open up security groups for NTP sync
+  hosts: localhost
+  tasks:
+    - name: Open up security groups for NTP - TCP
+      os_security_group_rule:
+        security_group: "{{cluster_name}}_sec_group"
+        protocol: tcp
+        port_range_min: 123
+        port_range_max: 123
+        remote_ip_prefix: 0.0.0.0/0
+        direction: ingress
+      when: is_openstack == "true"
+
+    - name: Open up security groups for NTP - TCP
+      os_security_group_rule:
+        security_group: "{{cluster_name}}_sec_group"
+        protocol: tcp
+        port_range_min: 123
+        port_range_max: 123
+        remote_ip_prefix: 0.0.0.0/0
+        direction: egress
+      when: is_openstack == "true"
+
+    - name: Open up security groups for NTP - UDP
+      os_security_group_rule:
+        security_group: "{{cluster_name}}_sec_group"
+        protocol: udp
+        port_range_min: 123
+        port_range_max: 123
+        remote_ip_prefix: 0.0.0.0/0
+        direction: ingress
+      when: is_openstack == "true"
+
+    - name: Open up security groups for NTP - UDP
+      os_security_group_rule:
+        security_group: "{{cluster_name}}_sec_group"
+        protocol: udp
+        port_range_min: 123
+        port_range_max: 123
+        remote_ip_prefix: 0.0.0.0/0
+        direction: egress
+      when: is_openstack == "true"
+
+- name: Set up NTP for all Servers
+  hosts: servers
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Install the NTP daemon to synchronize the clocks to ms.
+      apt: name=ntp
+
+    - name: Make sure ntp is started, and is enabled on restart.
+      service: name=ntp state=started enabled=yes
+
+    - name: Set the timezone to the {{new_host_timezone}} Europe/Berlin
+      timezone: "name=Europe/Berlin"
+
+- name: Set up master node as NTP-Server for the slaves.
+  hosts: slaves
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Comment out other servers
+      replace:
+        dest: /etc/ntp.conf
+        regexp: 'pool*'
+        replace: '#pool'
+      when: is_openstack == "true"
+
+    - name: Enter master IP adress
+      lineinfile:
+        dest: /etc/ntp.conf
+        line: "server {{item}}"
+      with_inventory_hostnames:
+        - master
+      when: is_openstack == "true"
+
+    # Attention: Multi-site NTP synchronization does not work, as the NTP server won`t be accepted
+    # by the nodes of the other cluster. The ntp stays in "INIT" state whan can be checked with the
+    # command: "ntpq -p"
+    # Change target hosts to "master" if uncommenting these lines.
+
+    #- name: Enter master IP address (CloudLab)
+    #  lineinfile:
+    #    dest: /etc/ntp.conf
+    #    line: "server {{hostvars[groups['master'][0]].ansible_fqdn}}"
+    #  with_inventory_hostnames:
+    #    - master
+    #  when: is_openstack == "false"
+
+- name: Restart NTP on all servers
+  hosts: servers
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Restarting services
+      ansible.builtin.systemd:
+        name: ntp
+        state: restarted

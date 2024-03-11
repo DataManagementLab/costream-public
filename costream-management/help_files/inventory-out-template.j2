@@ -1,0 +1,15 @@
+[servers:vars]
+ansible_ssh_private_key_file={{ssh_files_path}}/{{cluster_name}}/{{cluster_name}}_key
+
+[servers]
+{% for item in instances.results %}
+{{ item.server.name }}
+{% endfor %}
+
+[master]
+{{ instances.results[0].server.name}}
+
+[slaves]
+{% for item in instances.results[1:] %}
+{{ item.server.name }}
+{% endfor %}

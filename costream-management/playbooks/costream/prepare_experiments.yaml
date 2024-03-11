@@ -1,0 +1,384 @@
+#=============================================================================
+# This playbook prepares the storm clusters for the data collection.
+# Swap memory and cgroups are enabled if they are not by default.
+# log4j2-settings are overwritten
+# jars are uploaded
+# Additional required Java libraries are uploaded
+#=============================================================================
+-
+- import_playbook: "upload_jars.yaml"
+
+- name: Prepare master instance
+  hosts: master
+  gather_facts: true
+  become: true
+  tasks:
+  - name: Remove duplicated log4j-libraries from lib-worker on the master node # they are already in lib
+    shell: "rm {{storm_path}}/lib-worker/log4j-*"
+    ignore_errors: yes
+
+  - name: Update cluster.xml with scheduler-logger
+    copy:
+      dest: "{{storm_path}}/log4j2/cluster.xml"
+      content: |
+        <configuration monitorInterval="60" shutdownHook="disable">
+        <properties>
+            <property name="pattern">%d{yyyy-MM-dd HH:mm:ss.SSS} %c{1.} %t [%p] %msg%n</property>
+        </properties>
+        <appenders>
+          <RollingFile name="scheduler.log"
+                       fileName="${sys:storm.log.dir}/scheduler.log"
+                       filePattern="${sys:storm.log.dir}/scheduler.log.%i.gz"
+                       append="false"
+                       createOnDemand="true">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5p %c{1.} - %msg%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+          </RollingFile>
+          
+          <RollingFile name="A1"
+                       fileName="${sys:storm.log.dir}/${sys:logfile.name}"
+                       filePattern="${sys:storm.log.dir}/${sys:logfile.name}.%i.gz">
+            <PatternLayout charset="UTF-8">
+                <pattern>${pattern}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/> <!-- Or every 100 MB -->
+            </Policies>
+            <DefaultRolloverStrategy max="9"/>
+          </RollingFile>
+        
+          <RollingFile name="WEB-ACCESS"
+                       fileName="${sys:storm.log.dir}/access-web-${sys:daemon.name}.log"
+                       filePattern="${sys:storm.log.dir}/access-web-${sys:daemon.name}.log.%i.gz">
+            <PatternLayout>
+                <pattern>${pattern}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/> <!-- Or every 100 MB -->
+            </Policies>
+            <DefaultRolloverStrategy max="9"/>
+          </RollingFile>
+        
+          <RollingFile name="THRIFT-ACCESS"
+                       fileName="${sys:storm.log.dir}/access-${sys:logfile.name}"
+                       filePattern="${sys:storm.log.dir}/access-${sys:logfile.name}.%i.gz">
+          <PatternLayout>
+              <pattern>${pattern}</pattern>
+          </PatternLayout>
+              <Policies>
+                  <SizeBasedTriggeringPolicy size="100 MB"/> <!-- Or every 100 MB -->
+              </Policies>
+              <DefaultRolloverStrategy max="9"/>
+          </RollingFile>
+        
+          <RollingFile name="METRICS"
+                       fileName="${sys:storm.log.dir}/${sys:logfile.name}.metrics"
+                       filePattern="${sys:storm.log.dir}/${sys:logfile.name}.metrics.%i.gz">
+              <PatternLayout>
+                  <pattern>${patternMetrics}</pattern>
+              </PatternLayout>
+              <Policies>
+                  <SizeBasedTriggeringPolicy size="2 MB"/>
+              </Policies>
+            <DefaultRolloverStrategy max="9"/>
+          </RollingFile>
+        
+          <Syslog name="syslog" format="RFC5424" charset="UTF-8" host="localhost" port="514"
+            protocol="UDP" appName="[${sys:daemon.name}]" mdcId="mdc" includeMDC="true"
+            facility="LOCAL5" enterpriseNumber="18060" newLine="true" exceptionPattern="%rEx{full}"
+            messageId="[${sys:user.name}:S0]" id="storm" immediateFlush="true" immediateFail="true"/>
+        </appenders>
+        <loggers>
+          <Logger name="org.apache.storm.logging.filters.AccessLoggingFilter" level="info" additivity="false">
+            <AppenderRef ref="WEB-ACCESS"/>
+            <AppenderRef ref="syslog"/>
+          </Logger>
+          <Logger name="org.apache.storm.logging.ThriftAccessLogger" level="info" additivity="false">
+            <AppenderRef ref="THRIFT-ACCESS"/>
+            <AppenderRef ref="syslog"/>
+          </Logger>
+          <Logger name="org.apache.storm.metric.LoggingClusterMetricsConsumer" level="info" additivity="false">
+            <appender-ref ref="METRICS"/>
+          </Logger>
+          <logger name="scheduler" additivity="false">
+            <appender-ref ref="scheduler.log"/>
+          </logger>
+          <root level="info"> <!-- We log everything -->
+            <appender-ref ref="A1"/>
+            <appender-ref ref="syslog"/>
+          </root>
+        </loggers>
+        </configuration>
+
+  - name: Create empty database collections
+    community.mongodb.mongodb_shell:
+      login_host: "{{hostvars[inventory_hostname].ansible_hostname}}"
+      login_user: "{{mongo_user}}"
+      login_password: "{{mongo_password}}"
+      login_database: "{{mongo_database}}"
+      db: "{{mongo_database}}"
+      eval: "db.createCollection('query_observations');  db.createCollection('query_labels'); 
+      db.createCollection('query_placement'); db.createCollection('query_grouping'); 
+      db.createCollection('query_graphs'); db.createCollection('nw_params'); 
+      db.createCollection('hw_params'); db.createCollection('query_offsets')"
+    with_inventory_hostnames:
+    - master
+
+  - name: Adding custom scheduler to storm.yaml
+    lineinfile:
+      dest: "{{storm_path}}/conf/storm.yaml"
+      line: "storm.scheduler: costream.plan.executor.main.CustomScheduler"
+
+- name: Allow security groups for iperf3
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Add ingress rules to {{cluster_name}}_sec_group
+      os_security_group_rule:
+        security_group: "{{cluster_name}}_sec_group"
+        protocol: "{{ item.protocol }}"
+        port_range_min: "{{ item.port }}"
+        port_range_max: "{{ item.port }}"
+        remote_ip_prefix: 0.0.0.0/0
+        direction: "{{ item.direction }}"
+      with_items:
+        - { direction: ingress, protocol: tcp, port: 5001 }
+        - { direction: egress, protocol: tcp, port: 5001 }
+      when: is_openstack == "true"
+
+- name: Eventually enable swapping and prepare cgroups on worker machines
+  hosts: slaves
+  gather_facts: true
+  become: true
+  tasks:
+    # ------------------------------------------------ SWAP ----------------------------------------------------
+    # As some machines do not have a swap partition initially, it will be created as necessary with size of 3GB
+    - name: Save swapon into swap variable to check if swap partition is already existing
+      shell: "swapon -s"
+      register: swap
+
+    - name: Allocate swap memory
+      shell: sudo fallocate -l 3G /swapfile -x
+      when: swap.stdout_lines == []
+
+    - name:  Set rights for swapfile
+      shell: sudo chmod 600 /swapfile
+      when: swap.stdout_lines == []
+
+    - name: Call mkswap
+      shell: sudo mkswap /swapfile
+      when: swap.stdout_lines == []
+
+    - name: Enable swap
+      shell: sudo swapon /swapfile
+      when: swap.stdout_lines == []
+
+    - name: Create backup of fstab
+      shell: sudo cp /etc/fstab /etc/fstab.bak
+      when: swap.stdout_lines == []
+
+    - name: Add swap information to fstab, reboot is required and will follow later
+      shell: echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+      when: swap.stdout_lines == []
+
+    # ------------------------------------------------ BOOTLOADER -------------------------------------------------
+    # Check if grub is installed and enable swapaccount
+    - name: Save /etc/default/grub into bootloader_grub variable
+      stat:
+        path: /etc/default/grub
+      register: bootloader_grub
+
+    - name: Updating file /etc/default/grub in order to also set swapping behaviour later
+      blockinfile:
+        dest: /etc/default/grub
+        block: |
+          GRUB_CMDLINE_LINUX_DEFAULT="cgroup_enable=memory swapaccount=1"
+          GRUB_CMDLINE_LINUX="swapaccount=1"
+      when: bootloader_grub.stat.exists == true
+
+    - name: Update grub
+      shell: "sudo update-grub"
+      ignore_errors: yes
+      when: bootloader_grub.stat.exists == true
+
+    # Check if uBoot is installed and enable swapaccount
+    - name: Save /etc/flash-kernel/ubootenv.d into bootloader_uboot variable
+      stat:
+        path: /etc/flash-kernel/ubootenv.d
+      register: bootloader_uboot
+
+    - name: Create file /etc/flash-kernel/ubootenv.d/01-custom
+      file:
+        path: /etc/flash-kernel/ubootenv.d/01-custom
+        state: touch
+      when: bootloader_uboot.stat.exists
+
+    - name: Enable swapaccount by writing config into new file
+      copy:
+        dest: /etc/flash-kernel/ubootenv.d/01-custom
+        content: |
+          setenv bootargs ${bootargs} swapaccount=1
+      when: bootloader_uboot.stat.exists
+
+    - name: Flash the kernel
+      shell: sudo flash-kernel
+      when: bootloader_uboot.stat.exists
+
+    - name: fail when no bootloader is found at all
+      fail:
+        msg: Neither uBoot nor GRUB could be found
+      when: bootloader_uboot.stat.exists == false and bootloader_grub.stat.exists == false
+
+    - name: Reboot servers to apply previous changes
+      reboot:
+        reboot_timeout: 3600
+
+    - name: Save /sys/fs/cgroup/memory/memory.memsw.limit_in_bytes into memsw variable
+      stat:
+        path: /sys/fs/cgroup/memory/memory.memsw.limit_in_bytes
+      register: memsw
+
+    - name: Fail when /sys/fs/cgroup/memory/memory.memsw.limit_in_bytes does not exist
+      fail:
+        msg: /sys/fs/cgroup/memory/memory.memsw.limit_in_bytes does not exist
+      when: memsw.stat.exists == false
+
+    - name: Install cgroup-tools (required on Ubuntu Servers)
+      ansible.builtin.apt:
+        name: cgroup-tools
+
+    - name: Create cgroup with the name storm_resources for memory, cpu and network
+      shell: "cgcreate -a {{user}}:{{user}} -t {{user}}:{{user}} -g net_cls,memory,cpu,cpuacct:storm_resources"
+
+    - name: Assert if directory exists
+      stat: path=/sys/fs/cgroup/cpu/storm_resources
+      register: cgroup
+
+    - name: Fail if directory not on host
+      fail: msg="cgroup was not properly created"
+      when: not cgroup.stat.exists
+
+    - name: Change sudoers file so that {{user}} is allowed to execute tc command later without password
+      become: yes
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        line: "{{user}}    ALL= NOPASSWD: /usr/sbin/tc"
+
+    - name: Initialize default netem-rule that might be changed later
+      shell: sudo tc qdisc add dev `ip route | grep 192 | cut -d ' ' -f3` root netem delay 0ms rate 10000mbit
+
+    - name: Set storm.resource.isolation.plugin.enable to True for enabling cgroups
+      lineinfile:
+        dest: "{{storm_path}}/conf/storm.yaml"
+        line: "storm.resource.isolation.plugin.enable: True"
+
+    - name: Set cgroup hierarchy dir to /sys/fs/cgroup
+      lineinfile:
+        dest: "{{storm_path}}/conf/storm.yaml"
+        line: "storm.cgroup.hierarchy.dir: /sys/fs/cgroup"
+
+    - name: Set cgroup root dir to storm_resources
+      lineinfile:
+        dest: "{{storm_path}}/conf/storm.yaml"
+        line: "storm.supervisor.cgroup.rootdir: storm_resources"
+
+    - name: Set cgroup memory enforcement enable to True to enable cgroup-management of memory
+      lineinfile:
+        dest: "{{storm_path}}/conf/storm.yaml"
+        line: "storm.cgroup.memory.enforcement.enable: True"
+
+    - name: Activating storms cgroup controllers by adding resources to config
+      blockinfile:
+        dest: "{{storm_path}}/conf/storm.yaml"
+        block: |
+          storm.cgroup.resources:
+              - cpu
+              - memory
+              - net_cls
+
+- name: Upload files on all instances
+  hosts: servers
+  gather_facts: true
+  become: true
+  tasks:
+
+  - name: Install iperf3 for measurements
+    ansible.builtin.apt:
+      name: iperf3
+
+  - name: Install slurm for network monitoring
+    ansible.builtin.apt:
+      name: slurm
+
+  - name: Upload additional java libraries - Graph Stream
+    get_url:
+      url: https://repo1.maven.org/maven2/org/graphstream/gs-core/2.0/gs-core-2.0.jar
+      dest: "{{storm_path}}/lib"
+
+  - name: Upload additional java libraries - Graph Stream
+    get_url:
+      url: https://repo1.maven.org/maven2/org/graphstream/gs-core/2.0/gs-core-2.0.jar
+      dest: "{{storm_path}}/lib-worker"
+
+  - name: Upload additional java libraries - jCommander
+    get_url:
+      url: https://repo1.maven.org/maven2/com/beust/jcommander/1.81/jcommander-1.81.jar
+      dest: "{{storm_path}}/lib"
+
+  - name: Upload additional java libraries - MongoDB
+    get_url:
+      url: https://repo1.maven.org/maven2/org/mongodb/mongo-java-driver/3.2.0/mongo-java-driver-3.2.0.jar
+      #url: https://repo1.maven.org/maven2/org/mongodb/mongo-java-driver/3.12.10/mongo-java-driver-3.12.10.jar
+      dest: "{{storm_path}}/lib"
+
+  - name: Upload additional java libraries - MongoDB
+    get_url:
+      url: https://repo1.maven.org/maven2/org/mongodb/mongo-java-driver/3.2.0/mongo-java-driver-3.2.0.jar
+      #url: https://repo1.maven.org/maven2/org/mongodb/mongo-java-driver/3.12.10/mongo-java-driver-3.12.10.jar
+      dest: "{{storm_path}}/lib-worker"
+
+  - name: Upload additional java libraries - Kafka Client 2.4
+    get_url:
+      url: https://repo1.maven.org/maven2/org/apache/kafka/kafka-clients/2.4.0/kafka-clients-2.4.0.jar
+      dest: "{{storm_path}}/lib-worker"
+
+  - name: Upload additional java libraries - Jackson Databind 2.13.2.1
+    get_url:
+      url: https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/2.13.2.1/jackson-databind-2.13.2.1.jar
+      dest: "{{storm_path}}/lib-worker"
+
+  - name: Upload additional java libraries - Jackson Core 2.13.2
+    get_url:
+      url: https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-core/2.13.2/jackson-core-2.13.2.jar
+      dest: "{{storm_path}}/lib-worker"
+
+  - name: Upload additional java libraries - Jackson Annotations 2.13.1
+    get_url:
+      url: https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.13.1/jackson-annotations-2.13.1.jar
+      dest: "{{storm_path}}/lib-worker"
+
+  - name: Upload additional java libraries - Commons Lang
+    get_url:
+      url: https://repo1.maven.org/maven2/commons-lang/commons-lang/2.6/commons-lang-2.6.jar
+      dest: "{{storm_path}}/lib-worker"
+
+  - name: Upload additional java libraries - Commons Lang
+    get_url:
+      url: https://repo1.maven.org/maven2/com/jcraft/jsch/0.1.55/jsch-0.1.55.jar
+      dest: "{{storm_path}}/lib-worker"
+
+  - name: Install graphviz
+    ansible.builtin.apt:
+      name: graphviz
+
+  - name: Install graphviz-dev
+    ansible.builtin.apt:
+      name: graphviz-dev
+
+  - name: Install pygraphviz python package
+    ansible.builtin.pip:
+      name: pygraphviz

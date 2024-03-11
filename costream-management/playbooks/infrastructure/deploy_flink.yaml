@@ -1,0 +1,176 @@
+
+#=============================================================================
+#===== This playbook installs and runs flink on a given cluster      =========
+#=============================================================================
+- name: Prepare Flink installation
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Add ingress rules to{{cluster_name}}_sec_group
+    os_security_group_rule:
+        security_group: "{{cluster_name}}_sec_group"
+        protocol: "{{ item.protocol }}"
+        port_range_min: "{{ item.port }}"
+        port_range_max: "{{ item.port }}"
+        remote_ip_prefix: 0.0.0.0/0
+        direction: ingress
+    with_items:
+    - { direction: ingress, protocol: tcp, port: 8082 }
+    - { direction: ingress, protocol: tcp, port: 6123 }
+    - { direction: ingress, protocol: tcp, port: 6121 }
+    - { direction: ingress, protocol: tcp, port: 6139 }
+    -
+    - { direction: egress,  protocol: tcp, port: 8082 }
+    - { direction: egress, protocol: tcp, port: 6123 }
+    - { direction: egress, protocol: tcp, port: 6121 }
+    - { direction: egress, protocol: tcp, port: 6139 }
+    when: is_openstack == "true"
+    ignore_errors: yes
+
+  - name: Add rules to {{cluster_name}}_sec_group
+    os_security_group_rule:
+      security_group: "{{cluster_name}}_sec_group"
+      protocol: tcp
+      port_range_min: 6700
+      port_range_max: 6800
+      remote_ip_prefix: 0.0.0.0/0
+      direction: ingress
+    with_items:
+      - { direction: ingress, protocol: tcp, port_lower: 50100, port_upper: 50200 }
+      - { direction: egress, protocol: tcp, port_lower: 50100, port_upper: 50200 }
+    when: is_openstack == "true"
+    ignore_errors: yes
+
+#=============================================================================
+#=============================================================================
+
+- name: Install and run Apache Flink
+  hosts: servers
+  become: true
+  gather_facts: false
+  tasks:
+
+  - name: Check if flink already exists
+    stat:
+      path: "{{remote_prefix}}/flink/"
+    register: flink_path
+
+  - name: Get Flink
+    unarchive:
+      src: https://archive.apache.org/dist/flink/flink-1.11.3/flink-1.11.3-bin-scala_2.11.tgz
+      dest: "{{remote_prefix}}"
+      remote_src: yes
+      owner: "{{user}}"
+      group: "{{group}}"
+
+    when: flink_path.stat.exists == False
+
+  - name: Copy the flink files into existing flink folder
+    command: sudo cp -Rp {{ remote_prefix }}/flink-1.11.3/. {{ remote_prefix }}/flink/ #-p is important for permissions!
+    when: not flink_path.stat.exists
+
+  - name: Remove empty archive folder
+    file:
+      path: "{{remote_prefix}}/flink-1.11.3/"
+      state: absent
+
+  - name: Update config-files with master IP
+    replace:
+      path: "{{remote_prefix}}/flink/conf/flink-conf.yaml"
+      regexp: "jobmanager.rpc.address: localhost"
+      replace: "jobmanager.rpc.address: {{ item }}"
+    with_inventory_hostnames:
+      - master
+
+  - name: Update config-files with master IP
+    replace:
+      path: "{{remote_prefix}}/flink/conf/flink-conf.yaml"
+      regexp: "taskmanager.memory.process.size: 1728m"
+      replace: "taskmanager.memory.process.size: 1000m"
+
+  - name: Update worker-files with slaves
+    lineinfile:
+      dest: "{{remote_prefix}}/flink/conf/workers"
+      line: '{{ item }}'
+    with_inventory_hostnames:
+      - slaves
+
+  - name: Update masters-files with master
+    replace:
+      path: "{{remote_prefix}}/flink/conf/masters"
+      regexp: "localhost:8082"
+      replace: '{{item}}'
+    with_inventory_hostnames:
+      - master
+
+  - name: Update worker-files with taskmanager.data.port
+    lineinfile:
+      dest: "{{remote_prefix}}/flink/conf/flink-conf.yaml"
+      line:  "rest.port: 8082"
+
+
+    # Specify the workers (slaves) in the worker files
+  - name: Update worker-files with taskmanager.data.port
+    lineinfile:
+      dest: "{{remote_prefix}}/flink/conf/flink-conf.yaml"
+      line:  "taskmanager.data.port: 6121"
+
+    # Specify the workers (slaves) in the worker files
+  - name: Update worker-files with taskmanager.rpc.port
+    lineinfile:
+      dest: "{{remote_prefix}}/flink/conf/flink-conf.yaml"
+      line:  "taskmanager.rpc.port: 50100-50200"
+
+  - name: Update worker-files with blob.server.port
+    lineinfile:
+      dest: "{{remote_prefix}}/flink/conf/flink-conf.yaml"
+      line:  "blob.server.port: 6130"
+
+  - name: Add Flink-directory to $PATH.
+    copy:
+      dest: /etc/profile.d/flink-path.sh
+      content: 'PATH=$PATH:{{remote_prefix}}/flink/bin/'
+
+#==============================================================================
+#============================= Start flink ====================================
+#==============================================================================
+
+- name: Starting the flink cluster
+  hosts: master
+  gather_facts: false
+  tasks:
+
+  - name: accept new ssh fingerprints
+    shell: ssh-keyscan -H {{ item }} >> ~/.ssh/known_hosts
+    with_inventory_hostnames: servers
+
+  - name: accept new ssh fingerprints
+    shell: ssh-keyscan -H localhost >> ~/.ssh/known_hosts
+
+  - name: Create a service file
+    become: yes
+    copy:
+      dest: /etc/systemd/system/flink.service
+      content: |
+        [Unit]
+        Description=Start Flink
+        
+        [Service]
+        Type=forking
+        ExecStart={{remote_prefix}}/flink/bin/start-cluster.sh
+        User={{user}}
+        Group={{group}}
+        
+        [Install]
+        WantedBy=multi-user.target
+
+  - name: Start flink service
+    systemd: state=started name=flink daemon_reload=yes
+    become: true
+
+  - debug:
+      msg: "Flink is installed now! 
+      Start the flink cluster on the master with `start-cluster.sh`.
+      Stop the flink cluster on the master with `stop-cluster.sh`.
+      Use Command `flink` to submit jobs
+      Visit the GUI under {floating_ip_of_master}:8081`"

@@ -1,0 +1,190 @@
+#=============================================================================
+#===== This playbook installs and runs hadoop on a given cluster  ============
+#=============================================================================
+- name: Prepare Hadoop installation
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Add rules to {{cluster_name}}_sec_group
+    os_security_group_rule:
+        security_group: "{{cluster_name}}_sec_group"
+        protocol: "{{ item.protocol }}"
+        port_range_min: "{{ item.port }}"
+        port_range_max: "{{ item.port }}"
+        remote_ip_prefix: 0.0.0.0/0
+        direction: "{{ item.direction }}"
+    with_items:
+    - { direction: ingress, protocol: tcp, port: 9000 }
+    - { direction: ingress, protocol: tcp, port: 9870 }
+    - { direction: ingress, protocol: tcp, port: 8088 }
+    - { direction: egress,  protocol: tcp, port: 9000 }
+    - { direction: egress, protocol: tcp, port: 9870 }
+    - { direction: egress, protocol: tcp, port: 8088 }
+    when: is_openstack == "true"
+    ignore_errors: yes
+
+#=============================================================================
+#=============================================================================
+- name: Installing und running hadoop
+  hosts: servers
+  become: true
+  gather_facts: false
+  tasks:
+
+  - name: Check if hadoop already exists
+    stat:
+      path: "{{remote_prefix}}/hadoop/"
+    register: hadoop_path
+
+  - name: Get Hadoop
+    unarchive:
+      src: https://archive.apache.org/dist/hadoop/common/hadoop-3.1.4/hadoop-3.1.4.tar.gz
+      dest: "{{remote_prefix}}"
+      remote_src: yes
+      owner: "{{user}}"
+      group: "{{group}}"
+    when: hadoop_path.stat.exists == False
+
+  - name: Copy files from hadoop-3.1.4 to hadoop
+    copy: remote_src=True src="{{remote_prefix}}/hadoop-3.1.4/" dest="{{remote_prefix}}/hadoop/"
+    when: hadoop_path.stat.exists == False
+
+  - name: Set permissions
+    file:
+      path: "{{remote_prefix}}/hadoop"
+      owner: "{{user}}"
+      group: "{{group}}"
+      recurse: yes
+
+  - name: Remove old files
+    file: path="{{remote_prefix}}/hadoop-3.1.4" state=absent
+
+  - name: Copy XML files with hadoop configurations
+    copy: src=../xml_files/ dest="{{remote_prefix}}/hadoop/etc/hadoop/"
+
+  - name: Modify XML file (hadoopmaster needs to be configured in core-site.xml)
+    xml:
+      path: "{{remote_prefix}}/hadoop/etc/hadoop/core-site.xml"
+      xpath: /configuration/property/value
+      value: hdfs://{{item}}:9000
+    with_inventory_hostnames:
+      - master
+
+  - name: Modify XML file (resourcemanager adress needs to be configured in yarn-site.xml)
+    xml:
+      path: "{{remote_prefix}}/hadoop/etc/hadoop/yarn-site.xml"
+      xpath: /configuration/property[1]/value
+      value: "{{item}}"
+    with_inventory_hostnames:
+      - master
+
+  - name: Create HDFS folders
+    file:
+      path: "{{item}}"
+      owner: "{{user}}"
+      group: "{{group}}"
+      mode: 0755
+      state: directory
+    with_items:
+    - "{{remote_prefix}}/hadoop/hdfs/datanode"
+    - "{{remote_prefix}}/hadoop/hdfs/namenode"
+
+  - name: Insert Java Path into hadoop-env.sh
+    lineinfile:
+      path: "{{remote_prefix}}/hadoop/etc/hadoop/hadoop-env.sh"
+      line: JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
+
+  - name: Deleting old localhost entries
+    replace:
+      path: "{{remote_prefix}}/hadoop/etc/hadoop/workers"
+      regexp: 'localhost'
+      replace: ''
+
+  - name: Update worker-files with hadoopslaves
+    lineinfile: dest="{{remote_prefix}}/hadoop/etc/hadoop/workers" regexp='{{item}}' line="{{item}}"
+    with_inventory_hostnames:
+      - slaves
+
+  - name: Add HDFS-directory to $PATH.
+    copy:
+      dest: /etc/profile.d/hadoop-path.sh
+      content: 'PATH=$PATH:{{remote_prefix}}/hadoop/bin/:{{remote_prefix}}/hadoop/sbin/'
+
+  - name: remove old entries and clusterIDs
+    file:
+      path: /tmp/hadoop-ubuntu/dfs/data
+      state: absent
+#=============================================================================
+#==================== Execute hadoop on the master ===========================
+#=============================================================================
+- name: Execute Hadoop on hadoopmaster
+  hosts: master
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Change permissions on namenode
+      file: dest="{{remote_prefix}}/hadoop/hdfs/namenode" mode=0777
+
+    - name: Write environment variables into etc/environment
+      blockinfile:
+        path: /etc/environment
+        block: |
+          HADOOP_HOME="{{ remote_prefix }}/hadoop"
+          HADOOP_INSTALL="{{ remote_prefix }}/hadoop"
+          HADOOP_MAPRED_HOME="{{ remote_prefix }}/hadoop"
+          HADOOP_COMMON_HOME="{{ remote_prefix }}/hadoop"
+          HADOOP_HDFS_HOME="{{ remote_prefix }}/hadoop"
+          YARN_HOME="{{ remote_prefix }}/hadoop"
+          HADOOP_COMMON_LIB_NATIVE_DIR="{{ remote_prefix }}/hadoop/lib/native"
+          HADOOP_OPTS="-Djava.library.path={{ remote_prefix }}/hadoop/lib:{{ remote_prefix }}/hadoop//hadoop/lib/native" 
+          JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
+          HDFS_NAMENODE_USER="{{user}}"
+          HDFS_DATANODE_USER="{{user}}"
+          HDFS_SECONDARYNAMENODE_USER="{{user}}"
+          YARN_RESOURCEMANAGER_USER="{{user}}"
+          YARN_NODEMANAGER_USER="{{user}}"
+
+    - name: Source Environment
+      shell: . /etc/environment
+
+    - name: Create a service file for Hadoop
+      become: yes
+      copy:
+        dest: /etc/systemd/system/hadoop.service
+        content: |
+          [Unit]
+          Description=Start Hadoop
+          
+          [Service]
+          Type=forking
+          ExecStart={{remote_prefix}}/hadoop/sbin/start-dfs.sh
+          User={{user}}
+          Group={{group}}
+          EnvironmentFile=/etc/environment
+          
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Format name node
+      shell: timeout 2m "{{ remote_prefix }}/hadoop/bin/hdfs" namenode -format
+      ignore_errors: yes
+
+    - name: Start hadoop service
+      systemd: state=started name=hadoop daemon_reload=yes
+
+    - name: Validating if Hadoop is up and listening on port 9870
+      wait_for:
+        host: "{{item}}"
+        port: 9870
+        delay: 10
+        timeout: 30
+        state: started
+        msg: "Hadoop not seem to be running"
+      with_inventory_hostnames:
+        - master
+    - debug:
+        msg: "Hadoop is installed now! 
+        Check for master-floating ip at port 9870, call `jps` call `hdfs` command on master. 
+        Call `stop-all.sh`jps to kill the cluster and run `systemctl restart hadoop` to re-start."
+#=============================================================================
+#=============================================================================

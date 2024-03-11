@@ -1,0 +1,16 @@
+
+Host {{ instances.results[0].server.name }}
+    Hostname {{ masterhost.floating_ip.floating_ip_address }}
+    IdentityFile {{ssh_files_path}}/{{cluster_name}}/{{cluster_name}}_key
+    User ubuntu
+    ControlMaster auto
+    ControlPersist 30m
+
+{% for item in instances.results[1:] %}
+Host {{item.server.name}}
+    User ubuntu
+    Hostname {{item.server.private_v4}}
+    IdentityFile {{ssh_files_path}}/{{cluster_name}}/{{cluster_name}}_key
+    ProxyCommand ssh -W %h:%p  {{ instances.results[0].server.name }} -F {{ssh_files_path}}/{{cluster_name}}/sshconfig
+
+{% endfor %}

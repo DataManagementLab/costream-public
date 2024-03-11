@@ -1,0 +1,11 @@
+pandas
+tqdm
+numpy
+torch~=2.0.0
+matplotlib
+networkx
+scipy
+pygraphviz~=1.11
+scikit-learn
+wandb
+dgl

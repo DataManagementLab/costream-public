@@ -1,0 +1,32 @@
+# deprecated playbooks or snippets that were used to additionally utilize hardware resources with iperf and slurm
+
+- name: Upload files on all instances
+  hosts: servers
+  gather_facts: true
+  become: true
+  tasks:
+
+  - name: Install iperf3 for measurements
+    ansible.builtin.apt:
+      name: iperf3
+
+  - name: Install stress-ng for measurements
+    ansible.builtin.apt:
+      name: stress-ng
+
+
+- name: Reset storm on all slaves
+  hosts: slaves
+  gather_facts: false
+  become: true
+  tasks:
+  - name: Kill ongoing iperf clients
+    shell: "sudo kill `ps ax | grep 'iperf3 -p 5001 -f m -c' | head -n 1 | awk '{print $1}'`"
+    ignore_errors: yes
+
+  - name: Kill ongoing stress-ng applications
+    shell: "sudo pkill stress-ng"
+    ignore_errors: yes
+
+  - name: Run iperf server
+    command: iperf3 --server --daemon --port 5001

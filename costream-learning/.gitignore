@@ -1,0 +1,9 @@
+.idea/*
+__pycache__*
+*.pyc
+training_data*
+experimental_data_old
+experimental_data
+*.pdf
+*.csv
+.DS_STORE

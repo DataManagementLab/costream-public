@@ -1,0 +1,161 @@
+#=============================================================================
+#===== This playbook installs and runs MongoDB on a given cluster ============
+#=============================================================================
+- name: Allow security groups for storm
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Add ingress rules to {{cluster_name}}_sec_group
+    os_security_group_rule:
+        security_group: "{{cluster_name}}_sec_group"
+        protocol: "{{ item.protocol }}"
+        port_range_min: "{{ item.port }}"
+        port_range_max: "{{ item.port }}"
+        remote_ip_prefix: 0.0.0.0/0
+        direction: "{{ item.direction }}"
+    with_items:
+    - { direction: ingress, protocol: tcp, port: 27017 }
+    - { direction: egress, protocol: tcp, port: 27017 }
+    when: is_openstack == "true"
+    ignore_errors: yes
+
+- name: Install mongodb-clients
+  hosts: servers
+  gather_facts: false
+  become: true
+  tasks:
+  - name: Install mongodb-client
+    apt:
+      name: mongodb-clients
+      state: present
+
+- hosts: master
+  become: yes
+  tasks:
+  - name: Install pymongo python package
+    pip:
+      name: pymongo
+
+  - name: Import the public key used by the package management system to install mongo
+    shell: wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
+
+  - name: Create a list file for MongoDB
+    #shell: echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-5.0.list
+    shell: echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+
+  - name: Reload local package database
+    shell: sudo apt-get update
+
+  - name: Install mongo-server-core
+    apt:
+      name: mongodb-server-core
+      state: present
+
+  - name: Create a mongo user
+    ansible.builtin.user:
+      name: mongodb
+
+  - name: Create a mongo file directory
+    file:
+      dest: /var/lib/mongodb
+      owner: mongodb
+      state: directory
+
+  - name: Create a log file for mongo
+    copy:
+      content: ""
+      dest: /var/log/mongod.log
+      force: no
+      owner: mongodb
+
+  - name: Insert configs to mongo config file
+    copy:
+      dest: /etc/mongod.conf
+      content: |
+        # mongod.conf
+        storage:
+          dbPath: /var/lib/mongodb
+          journal:
+            enabled: true
+
+        # where to write logging data.
+        systemLog:
+          destination: file
+          logAppend: true
+          path: /var/log/mongod.log
+
+        # network interfaces
+        net:
+          port: 27017
+          bindIp: {{hostvars[inventory_hostname].ansible_hostname}}
+
+        # how the process runs
+        processManagement:
+          timeZoneInfo: /usr/share/zoneinfo
+        #security:
+
+  - name: Create a service file for Mongo
+    become: yes
+    copy:
+      dest: /etc/systemd/system/mongod.service
+      content: |
+        [Service]
+        Type=simple
+        ExecStart=/usr/bin/mongod --config /etc/mongod.conf
+        Restart=on-abnormal
+        User=mongodb
+        
+        [Install]
+        WantedBy=multi-user.target
+
+  - name: Reload daemon
+    become: true
+    systemd:
+      daemon_reload: yes
+
+  - name: Start Mongo
+    become: true
+    systemd:
+      name: 'mongod'
+      state: started
+      enabled: yes
+
+  - name: Create MongoDB user {{mongo_user}}
+    mongodb_user:
+      login_host: "{{hostvars[inventory_hostname].ansible_hostname}}"
+      login_port: "27017"
+      database: "{{mongo_database}}"
+      name: "{{mongo_user}}"
+      password: "{{mongo_password}}"
+      roles:
+        - { db: "admin", role: "readWrite" }
+        - { db: "{{mongo_database}}", role: "readWrite" }
+    with_inventory_hostnames:
+    - master
+
+  - name: enable user authentication
+    blockinfile:
+      path: /etc/mongod.conf
+      block: |
+        security:
+            authorization: enabled
+      insertafter: '#security'
+
+  - name: Restart mongo
+    ansible.builtin.systemd:
+      name: mongod
+      state: restarted
+
+  - name: Validate if Mongo is up and listening on port 27017
+    wait_for:
+      host: "{{item}}"
+      port: 27017
+      delay: 10
+      timeout: 30
+      state: started
+      msg: "Mongo not seem to be running"
+    with_inventory_hostnames:
+      - master
+
+  - debug:
+      msg: "Mongo is installed and runs now"

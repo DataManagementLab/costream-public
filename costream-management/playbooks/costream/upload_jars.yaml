@@ -1,0 +1,64 @@
+#=============================================================================
+# These commands upload all corresponding JARs to the target location.
+#=============================================================================
+
+- name: Upload JARs on master
+  hosts: master
+  gather_facts: false
+  become: true
+  tasks:
+  - name: Upload plan-executor master
+    copy:
+      owner: "{{user}}"
+      group: "{{group}}"
+      src: "{{jar_path}}/plan-executor/target/plan-executor-1.0.0.jar"
+      dest: "{{storm_path}}"
+
+  - name: Upload plan-executor to master lib
+    copy:
+      remote_src: yes
+      owner: "{{user}}"
+      group: "{{group}}"
+      src: "/var/bigdata/storm/plan-executor-1.0.0.jar"
+      dest: "{{storm_path}}/lib"
+
+  - name: Upload plan-enumerator to master
+    copy:
+      owner: "{{user}}"
+      group: "{{group}}"
+      src: "{{jar_path}}/plan-enumerator/target/plan-enumerator-1.0.0.jar"
+      dest: "{{storm_path}}"
+
+  - name: Upload storm-kafka-client to master lib
+    copy:
+      owner: "{{user}}"
+      group: "{{group}}"
+      src: "{{jar_path}}//storm-kafka-client/target/storm-kafka-client-2.4.0.jar"
+      dest: "{{storm_path}}/lib"
+
+- name: Upload JARs on all slaves
+  hosts: servers
+  gather_facts: false
+  become: true
+  tasks:
+  - name: Upload storm-client to all servers
+    copy:
+      src: "{{item.src}}"
+      dest: "{{item.dest}}"
+      owner: "{{user}}"
+      group: "{{group}}"
+    with_items:
+      - { src: "{{jar_path}}/storm-client/target/storm-client-2.4.0.jar", dest: "{{storm_path}}/lib" }
+      - { src: "{{jar_path}}/storm-client/target/storm-client-2.4.0.jar", dest: "{{storm_path}}/lib-worker"}
+      - { src: "{{jar_path}}/storm-kafka-client/target/storm-kafka-client-2.4.0.jar", dest: "{{storm_path}}/lib-worker"}
+      -  {src: "{{jar_path}}/storm-server/target/storm-server-2.4.0.jar", dest: "{{storm_path}}/lib" }
+
+- name: Upload JARs on all slaves
+  hosts: master
+  gather_facts: false
+  become: true
+  tasks:
+  - name: Remove storm-client from lib-worker at master
+    file:
+      path: "{{storm_path}}/lib-worker/storm-client-2.4.0.jar"
+      state: absent

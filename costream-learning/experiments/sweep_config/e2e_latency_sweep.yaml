@@ -1,0 +1,22 @@
+command:
+- ${env}
+- python3
+- ${program}
+- --training_data 
+-  ./training_data/training_data_full
+- --sync
+- --config
+- ./sweep_config/e2e_latency_sweep.ini
+- --device
+- cuda
+program: ./main.py
+method: bayes
+metric:
+  name: val_q_error_50
+  goal: minimize
+parameters:
+  lr:
+    min: 0.00001
+    max: 0.001
+  activation_class_name:
+    values: ["LeakyReLU", "CELU", "SELU", "ELU"]

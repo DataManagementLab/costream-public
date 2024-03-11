@@ -1,0 +1,30 @@
+- name: Get hardware parameters and load them into mongodb
+  hosts: master
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Clear old hardware features
+      community.mongodb.mongodb_shell:
+        login_host: "{{ansible_hostname}}"
+        login_user: "{{mongo_user}}"
+        login_password: "{{mongo_password}}"
+        login_database: "{{mongo_database}}"
+        db: "{{mongo_database}}"
+        eval: "db.hw_params.drop();"
+      with_inventory_hostnames:
+        - master
+      ignore_errors: yes
+
+- name: Get hardware parameters
+  hosts: servers
+  gather_facts: true
+  become: true
+  tasks:
+  - name: Add offline features to mongo
+    shell: "mongo -u {{mongo_user}} -p {{mongo_password}} --authenticationDatabase {{mongo_database}} mongodb://{{hostvars[groups['master'][0]].ansible_hostname}}/{{mongo_database}} \
+        --eval \"db.hw_params.insert({host: '{{ansible_hostname}}', \
+         mem_max_mb: `free -m | grep Mem | tr -s ' ' | cut -d ' ' -f 2`, \
+         cpu_cores: `grep -c ^processor /proc/cpuinfo`, \
+         });\""
+    with_inventory_hostnames:
+    - master

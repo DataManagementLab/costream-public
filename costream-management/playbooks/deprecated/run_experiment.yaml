@@ -1,0 +1,17 @@
+- import_playbook: "get_hw_feat.yaml"
+- import_playbook: "get_nw_feat.yaml"
+
+- name: Execute experiments
+  hosts: master
+  gather_facts: false
+  become: true
+  tasks:
+    - name: "Execute plan-enumerator"
+      shell: "sudo -u {{user}} java -jar {{storm_path}}/plan-enumerator-2.2.0.jar --num 100 --output {{storm_path}}/query --mode random"
+
+    - name: "Execute plan-executor"
+      shell: "nohup sudo -u {{user}} /var/bigdata/storm/bin/storm jar {{storm_path}}/plan-executor-2.2.0.jar main.PlanExecutor
+              --input {{storm_path}}/query 
+              -d 90000
+              -l {{storm_path}}/logs
+              --output {{storm_path}}/query-executed >> {{storm_path}}/logs/current_run.out&"

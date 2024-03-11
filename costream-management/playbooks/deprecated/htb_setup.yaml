@@ -1,0 +1,12 @@
+# Older scripts to enable htb qdisc for tc that allows cgroup class filtering
+
+  - name: Create qdisc for network device ens3
+    shell: "tc qdisc add dev `ip route | grep 192 | cut -d ' ' -f3` root handle 10: htb"
+    ignore_errors: yes
+
+  - name: Create initial rule (that is changed later)
+    shell: "tc class add dev `ip route | grep 192 | cut -d ' ' -f3` parent 10: classid 10:1 htb rate 10000mbit"
+    ignore_errors: yes
+
+  - name: Apply tc filter
+    shell: "tc filter add dev `ip route | grep 192 | cut -d ' ' -f3` parent 10: protocol ip prio 10 handle 1: cgroup"

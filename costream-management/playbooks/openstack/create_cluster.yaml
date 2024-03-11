@@ -1,0 +1,140 @@
+#=============================================================================
+#======== This playbook creates an openstack cluster  ========================
+#=============================================================================
+- name: Deploy network on OpenStack
+  hosts: localhost
+  gather_facts: false
+  tasks:
+
+  - name: Create a temporary folder for cluster-specific files
+    file: 
+      path: "{{ssh_files_path}}/{{cluster_name}}"
+      state: directory
+
+  - name: Generate a SSH key {{cluster_name}}_key
+    openssh_keypair:
+      path: "{{ssh_files_path}}/{{cluster_name}}/{{cluster_name}}_key"
+      type: rsa
+      size: 4096
+      state: present
+      force: no
+
+  - name: Deletes old keypair if one exists
+    os_keypair:
+        validate_certs: false
+        state: absent
+        name: "{{cluster_name}}_key"
+
+  - name: Creates a new key pair {{cluster_name}}_key and register the private key returned after the run.
+    os_keypair:
+        validate_certs: false
+        state: present
+        name: "{{cluster_name}}_key"
+        public_key_file: "{{ssh_files_path}}/{{cluster_name}}/{{cluster_name}}_key.pub"
+    register: keypair
+
+  - name: Change permission of key {{cluster_name}}_key
+    file: dest="{{ssh_files_path}}/{{cluster_name}}/{{cluster_name}}_key" mode=400
+
+  - name: Create network {{cluster_name}}_network
+    os_network:
+      name: "{{cluster_name}}_network"
+
+  - name: Create subnet {{cluster_name}}subnet
+    os_subnet:
+      network_name: "{{cluster_name}}_network"
+      name: "{{cluster_name}}subnet"
+      cidr: "{{network_addresses}}"
+      dns_nameservers:
+        - "{{dns_server}}"
+    register: subnet
+
+  - name: Create {{cluster_name}}router in the specified network
+    os_router:
+      name: "{{cluster_name}}router"
+      network: "{{domain}}"
+      interfaces:
+        - "{{cluster_name}}subnet"
+    register: router
+
+  - name: Create security group {{cluster_name}}_sec_group
+    os_security_group:
+      validate_certs: false
+      state: present
+      name: "{{cluster_name}}_sec_group"
+      
+  - name: Add ping to the security group {{cluster_name}}_sec_group
+    os_security_group_rule:
+      validate_certs: false
+      state: present
+      security_group: "{{cluster_name}}_sec_group"
+      protocol: icmp
+
+  - name: Add SSH to the security group {{cluster_name}}_sec_group
+    os_security_group_rule:
+        security_group: "{{cluster_name}}_sec_group"
+        protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
+        direction: ingress
+
+  - name: Deploy {{node_count}} instance(s)
+    os_server:
+      timeout: 600
+      name: "{{cluster_name}}{{item}}"
+      image: "{{image}}"
+      state: present
+      availability_zone: nova
+      flavor: "{{flavor}}"
+      network: "{{cluster_name}}_network"
+      security_groups: "{{cluster_name}}_sec_group"
+      auto_ip: no
+      key_name: "{{cluster_name}}_key"
+      userdata: |
+          #cloud-config
+          package_upgrade: true
+          package_update: true
+          hostname: "{{cluster_name}}{{item}}"
+    register: "instances"
+    with_sequence: start=0 end="{{node_count|int - 1}}"
+
+  - name: Attach floating IP to {{cluster_name}}0
+    register: "masterhost"
+    openstack.cloud.floating_ip:
+        state: present
+        server: "{{cluster_name}}0"
+        network: "{{domain}}"
+        nat_destination: "{{cluster_name}}_network"
+        wait: true
+        timeout: 180
+        reuse: true
+
+  - name: Create a host list with all created instances. This serves as an dynamic inventory that is later used for further playbooks
+    template:
+      src: ../../help_files/inventory-out-template.j2
+      dest: "{{ssh_files_path}}/{{cluster_name}}/ansible_hosts"
+
+  - name: Create an etc/host-file, that can be later distributed on all servers
+    template:
+      src: ../../help_files/etchost-out-template.j2
+      dest: "{{ssh_files_path}}/{{cluster_name}}/hosts"
+
+  - name: Create ssh-config file. Required to make ansible use the master server as a bastion server
+    template:
+      src: ../../help_files/sshconfig-out-template.j2
+      dest: "{{ssh_files_path}}/{{cluster_name}}/sshconfig"
+
+#=============================================================================
+#===== This playbook sets sshconfig-file to ansible for further use ==========
+#=============================================================================
+- name: Update ansible.cfg
+  hosts: localhost
+  gather_facts: false
+  tags: cfg
+  tasks:
+  - name: Create ansible.cfg file to adjust ansible
+    copy:
+      dest: "{{ssh_files_path}}/{{cluster_name}}/ansible.cfg"
+      content: |
+        [ssh_connection]
+        ssh_args = -F {{ssh_files_path}}/{{cluster_name}}/sshconfig

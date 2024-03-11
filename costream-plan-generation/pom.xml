@@ -1,0 +1,1499 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Licensed to the Apache Software Foundation (ASF) under one or more
+ contributor license agreements.  See the NOTICE file distributed with
+ this work for additional information regarding copyright ownership.
+ The ASF licenses this file to You under the Apache License, Version 2.0
+ (the "License"); you may not use this file except in compliance with
+ the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.apache</groupId>
+        <artifactId>apache</artifactId>
+        <version>21</version>
+    </parent>
+
+    <groupId>org.apache.storm</groupId>
+    <artifactId>costream</artifactId>
+    <version>2.4.0</version>
+    <packaging>pom</packaging>
+    <name>Storm</name>
+    <description>Distributed and fault-tolerant realtime computation</description>
+    <url>https://storm.apache.org</url>
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <mailingLists>
+        <mailingList>
+            <name>Storm user mailing list</name>
+            <subscribe>user-subscribe@storm.apache.org</subscribe>
+            <unsubscribe>user-unsubscribe@storm.apache.org</unsubscribe>
+            <post>user@storm.apache.org</post>
+            <archive>http://mail-archives.apache.org/mod_mbox/storm-user/</archive>
+        </mailingList>
+        <mailingList>
+            <name>Storm developer mailing list</name>
+            <subscribe>dev-subscribe@storm.apache.org</subscribe>
+            <unsubscribe>dev-unsubscribe@storm.apache.org</unsubscribe>
+            <post>dev@storm.apache.org</post>
+            <archive>http://mail-archives.apache.org/mod_mbox/storm-dev/</archive>
+        </mailingList>
+    </mailingLists>
+
+    <developers>
+        <developer>
+            <id>nathanmarz</id>
+            <name>Nathan Marz</name>
+            <email>nathan@nathanmarz.com</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-8</timezone>
+        </developer>
+        <developer>
+            <id>ptgoetz</id>
+            <name>P. Taylor Goetz</name>
+            <email>ptgoetz@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-5</timezone>
+        </developer>
+        <developer>
+            <id>xumingming</id>
+            <name>James Xu</name>
+            <email>xumingming@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone />
+        </developer>
+        <developer>
+            <id>afeng</id>
+            <name>Andy Feng</name>
+            <email>afeng@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-8</timezone>
+        </developer>
+        <developer>
+            <id>davidlao</id>
+            <name>David Lao</name>
+            <email>davidlao@microsoft.com</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-8</timezone>
+        </developer>
+        <developer>
+            <id>mrflip</id>
+            <name>Flip Kromer</name>
+            <email>mrflip@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone />
+        </developer>
+        <developer>
+            <id>jjackson</id>
+            <name>Jason Jackson</name>
+            <email>jasonjckn@gmail.com</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-8</timezone>
+        </developer>
+        <developer>
+            <id>bobby</id>
+            <name>Robert Evans</name>
+            <email>evans@yahoo-inc.com</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-6</timezone>
+        </developer>
+        <developer>
+            <id>dagit</id>
+            <name>Derek Dagit</name>
+            <email>derekd@yahoo-inc.com</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-6</timezone>
+        </developer>
+        <developer>
+            <id>miguno</id>
+            <name>Michael G. Noll</name>
+            <email>michael@michael-noll.com</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <id>dossett</id>
+            <name>Aaron Dossett</name>
+            <email>dossett@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-6</timezone>
+        </developer>
+        <developer>
+            <id>jerrypeng</id>
+            <name>Boyang Jerry Peng</name>
+            <email>jerrypeng@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-6</timezone>
+        </developer>
+        <developer>
+            <id>longda</id>
+            <name>Longda Feng</name>
+            <email>longda@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>+8</timezone>
+        </developer>
+        <developer>
+            <id>abhishek</id>
+            <name>Abhishek Agarwal</name>
+            <email>abhishek@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>+5.5</timezone>
+        </developer>
+        <developer>
+            <id>satishd</id>
+            <name>Satish Duggana</name>
+            <email>satishd@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>+5.5</timezone>
+        </developer>
+        <developer>
+            <id>vesense</id>
+            <name>Xin Wang</name>
+            <email>xinwang@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>+8</timezone>
+        </developer>
+        <developer>
+            <id>hmclouro</id>
+            <name>Hugo da Cruz Louro</name>
+            <email>hmclouro@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-8</timezone>
+        </developer>
+        <developer>
+            <id>roshannaik</id>
+            <name>Roshan Naik</name>
+            <email>roshannaik@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-8</timezone>
+        </developer>
+        <developer>
+            <id>Ethanlm</id>
+            <name>Ethan Li</name>
+            <email>ethanli@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-6</timezone>
+        </developer>
+        <developer>
+            <id>govind-menon</id>
+            <name>Govind Menon</name>
+            <email>govind@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-6</timezone>
+        </developer>
+        <developer>
+            <id>agresch</id>
+            <name>Aaron Gresch</name>
+            <email>agresch@gmail.com</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-6</timezone>
+        </developer>
+        <developer>
+            <id>ruili</id>
+            <name>Rui Li</name>
+            <email>ruili@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-6</timezone>
+        </developer>
+        <developer>
+            <id>bipinprasad</id>
+            <name>Bipin Prasad</name>
+            <email>bipinprasad@apache.org</email>
+            <roles>
+                <role>Committer</role>
+            </roles>
+            <timezone>-6</timezone>
+        </developer>
+
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://gitbox.apache.org/repos/asf/storm.git</connection>
+        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/storm.git</developerConnection>
+        <url>https://gitbox.apache.org/repos/asf/storm</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <issueManagement>
+        <system>jira</system>
+        <url>https://issues.apache.org/jira/browse/STORM</url>
+    </issueManagement>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <test.extra.args>-Djava.net.preferIPv4Stack=true</test.extra.args>
+        <!-- license-maven-plugin that needs to be overridable from command line -->
+        <license.skipAggregateAddThirdParty>true</license.skipAggregateAddThirdParty>
+        <license.skipAggregateDownloadLicenses>true</license.skipAggregateDownloadLicenses>
+        <license.thirdPartyFilename>DEPENDENCY-LICENSES</license.thirdPartyFilename>
+        <license.outputDirectory>${project.basedir}</license.outputDirectory>
+
+        <!-- dependency versions -->
+        <clojure.version>1.10.0</clojure.version>
+        <commons-compress.version>1.18</commons-compress.version>
+        <commons-io.version>2.6</commons-io.version>
+        <commons-lang.version>2.6</commons-lang.version>
+        <commons-exec.version>1.3</commons-exec.version>
+        <commons-collections.version>3.2.2</commons-collections.version>
+        <commons-fileupload.version>1.3.3</commons-fileupload.version>
+        <commons-codec.version>1.11</commons-codec.version>
+        <commons-cli.version>1.4</commons-cli.version>
+        <curator.version>4.3.0</curator.version>
+        <json-simple.version>1.1</json-simple.version>
+        <jetty.version>9.4.14.v20181114</jetty.version>
+        <clojure.tools.logging.version>0.2.3</clojure.tools.logging.version>
+        <carbonite.version>1.5.0</carbonite.version>
+        <snakeyaml.version>1.26</snakeyaml.version>
+        <httpclient.version>4.5.6</httpclient.version>
+        <jctools.version>2.0.1</jctools.version>
+        <jgrapht.version>0.9.0</jgrapht.version>
+        <guava.version>27.0.1-jre</guava.version>
+        <auto-service.version>1.0-rc4</auto-service.version>
+        <netty.version>4.1.30.Final</netty.version>
+        <sysout-over-slf4j.version>1.0.2</sysout-over-slf4j.version>
+        <log4j.version>2.17.1</log4j.version>
+        <slf4j.version>1.7.36</slf4j.version>
+        <metrics.version>3.2.6</metrics.version>
+        <mockito.version>3.0.0</mockito.version>
+        <zookeeper.version>3.5.9</zookeeper.version>
+        <jline.version>0.9.94</jline.version>
+        <hive.version>2.3.4</hive.version>
+        <hadoop.version>2.8.5</hadoop.version>
+        <hdfs.version>${hadoop.version}</hdfs.version>
+        <hbase.version>2.1.3</hbase.version>
+        <kryo.version>3.0.3</kryo.version>
+        <servlet.version>3.1.0</servlet.version>
+        <joda-time.version>2.3</joda-time.version>
+        <thrift.version>0.13.0</thrift.version>
+        <junit.jupiter.version>5.5.1</junit.jupiter.version>
+        <surefire.version>2.22.2</surefire.version>
+        <awaitility.version>3.1.0</awaitility.version>
+        <hdrhistogram.version>2.1.10</hdrhistogram.version>
+        <hamcrest.version>2.0.0.0</hamcrest.version>
+        <cassandra.version>2.1.7</cassandra.version>
+        <elasticsearch.version>5.2.2</elasticsearch.version>
+        <calcite.version>1.14.0</calcite.version>
+        <mongodb.version>3.2.0</mongodb.version>
+        <solr.version>5.2.1</solr.version>
+        <jpmml.version>1.0.22</jpmml.version>
+        <jedis.version>2.9.0</jedis.version>
+        <activemq.version>5.15.8</activemq.version>
+        <rocketmq.version>4.2.0</rocketmq.version>
+
+        <jackson.version>2.10.0</jackson.version>
+
+        <storm.kafka.client.version>0.11.0.3</storm.kafka.client.version>
+
+        <!-- Java and clojure build lifecycle test properties are defined here to avoid having to create a default profile -->
+        <java.unit.test.exclude.groups>PerformanceTest</java.unit.test.exclude.groups>
+        <!-- by default the clojure test set are all clojure tests that are not integration tests. This property is overridden in the profiles -->
+        <clojure.test.set>!integration.*</clojure.test.set>
+        <skipITs>true</skipITs>
+
+        <maven-resolver.version>1.3.3</maven-resolver.version>
+        <maven.version>3.6.0</maven.version>
+        <azure-eventhubs.version>0.13.1</azure-eventhubs.version>
+        <jersey.version>2.29</jersey.version>
+        <dropwizard.version>1.3.19</dropwizard.version>
+        <j2html.version>1.0.0</j2html.version>
+        <jool.version>0.9.12</jool.version>
+        <caffeine.version>2.3.5</caffeine.version>
+        <jakarta-jaxb-version>2.3.2</jakarta-jaxb-version>
+        <jakarta-activation-version>1.2.1</jakarta-activation-version>
+        <jaxb-version>2.3.0</jaxb-version>
+        <activation-version>1.1.1</activation-version>
+        <rocksdb-version>5.18.4</rocksdb-version>
+
+        <!-- see intellij profile below... This fixes an annoyance with intellij -->
+        <provided.scope>provided</provided.scope>
+    </properties>
+
+    <modules>
+        <module>storm-client</module>
+        <module>storm-server</module>
+        <module>storm-kafka-client</module>
+    </modules>
+
+    <dependencies>
+        <!-- The JUnit dependency is required for submodules by the maven-surefire-plugin <excludedGroups> configuration -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- This also puts JUnit 4 on the test classpath for all modules -->
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <!--
+            Hack to make intellij behave.
+            If you use intellij, enable this profile in your IDE.
+            It should make life easier.
+        -->
+        <profile>
+            <id>intellij</id>
+            <properties>
+                <provided.scope>compile</provided.scope>
+            </properties>
+        </profile>
+        <profile>
+            <id>rat</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.rat</groupId>
+                        <artifactId>apache-rat-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <excludeSubProjects>false</excludeSubProjects>
+                            <consoleOutput>true</consoleOutput>
+                            <excludes>
+                                <!-- exclude maven artifacts -->
+                                <exclude>**/target/**</exclude>
+                                <!-- exclude intellij projects -->
+                                <exclude>**/*.iml</exclude>
+                                <exclude>**/.idea/**</exclude>
+                                <!-- exclude eclipse projects -->
+                                <exclude>**/*.classpath</exclude>
+                                <exclude>**/.project</exclude>
+                                <exclude>**/.settings/**</exclude>
+                                <!-- module specific testing artifacts -->
+                                <exclude>**/metastore_db/**</exclude>
+                                <!-- anything written into build should be ignored -->
+                                <exclude>**/build/**</exclude>
+                                <!-- logs generated during test -->
+                                <exclude>**/logs/**</exclude>
+
+                                <!-- exclude CHANGELOG, VERSION, AND TODO files -->
+                                <exclude>**/CHANGELOG.md</exclude>
+                                <exclude>**/README.md</exclude>
+                                <exclude>**/README.markdown</exclude>
+                                <exclude>**/DEVELOPER.md</exclude>
+                                <exclude>**/RELEASING.md</exclude>
+                                <exclude>**/BYLAWS.md</exclude>
+                                <exclude>**/STORM-UI-REST-API.md</exclude>
+                                <exclude>SECURITY.md</exclude>
+                                <exclude>VERSION</exclude>
+                                <exclude>TODO</exclude>
+                                <exclude>DEPENDENCY-LICENSES</exclude>
+                                <exclude>LICENSE-binary</exclude>
+                                <exclude>NOTICE-binary</exclude>
+                                <!-- Exclude dependency license files -->
+                                <exclude>licenses/**</exclude>
+                                <!-- thrift-generated code -->
+                                <exclude>**/src/py/**</exclude>
+
+                                <!-- Used as part of travis-ci build -->
+                                <exclude>install.txt</exclude>
+                                <exclude>storm-shaded-deps/install-shade.txt</exclude>
+                                <!-- the following are in the LICENSE file -->
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/jquery.dataTables.1.10.4.min.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/css/jquery.dataTables.1.10.4.min.css</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/images/*</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/bootstrap-3.3.1.min.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/css/bootstrap-3.3.1.min.css</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/dataTables.bootstrap.min.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/css/dataTables.bootstrap.css</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/jsonFormatter.min.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/css/jsonFormatter.min.css</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/jquery-3.5.1.min.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/jquery.cookies.2.2.0.min.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/moment.min.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/jquery.blockUI.min.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/url.min.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/jquery.mustache.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/typeahead.jquery.min.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/cytoscape-dagre.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/dagre.min.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/esprima.min.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/js-yaml.min.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/js/vis.min.js</exclude>
+                                <exclude>**/src/main/java/org/apache/storm/daemon/ui/WEB-INF/css/vis.min.css</exclude>
+                                <exclude>**/src/main/resources/Audit.50.csv</exclude>
+                                <exclude>**/src/main/resources/KNIME_PMML_4.1_Examples_single_audit_logreg.xml</exclude>
+                                <exclude>**/src/main/sampledata/**</exclude>
+
+                                <!-- generated by shade plugin -->
+                                <exclude>**/dependency-reduced-pom.xml</exclude>
+
+                                <exclude>**/docs/**</exclude>
+                                <exclude>**/.git/**</exclude>
+                                <exclude>**/.github/**</exclude>
+                                <exclude>**/derby.log</exclude>
+                                <exclude>**/src/dev/**</exclude>
+
+                                <!-- webapp test resources -->
+                                <exclude>**/src/test/resources/test-3072.log.test</exclude>
+                                <exclude>**/src/test/resources/small-worker.log.test</exclude>
+                                <exclude>**/src/test/resources/test-worker.log.test</exclude>
+                                <exclude>**/src/test/resources/logviewer-search-context-tests.log.test</exclude>
+
+                                <!-- StormSQL -->
+                                <exclude>**/src/codegen/config.fmpp</exclude>
+                                <exclude>**/src/codegen/data/Parser.tdd</exclude>
+
+                                <!-- Avro Serializer Test Resource -->
+                                <exclude>**/src/test/resources/FixedAvroSerializer.config</exclude>
+
+                                <!-- Vagrant related files -->
+                                <exclude>integration-test/config/.vagrant/**</exclude>
+
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>sign</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>dist</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/javadoc</outputDirectory>
+                            <reportOutputDirectory>./docs/javadoc</reportOutputDirectory>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>javadoc</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>aggregate</id>
+                                <goals>
+                                    <goal>aggregate</goal>
+                                </goals>
+                                <phase>site</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                    <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>all-tests</id>
+            <properties>
+                <!-- add perf tests back in -->
+                <java.unit.test.exclude.groups>nothing</java.unit.test.exclude.groups>
+                <clojure.test.set>*.*</clojure.test.set>
+                <skipITs>false</skipITs>
+            </properties>
+        </profile>
+        <profile>
+            <id>performance-tests</id>
+            <properties>
+                <!-- add perf tests back in -->
+                <java.unit.test.exclude.groups>nothing</java.unit.test.exclude.groups>
+            </properties>
+        </profile>
+        <profile>
+            <id>integration-tests-only</id>
+            <properties>
+                <!--Java-->
+                <skipITs>false</skipITs>
+                <!--Clojure-->
+                <clojure.test.set>integration.*</clojure.test.set>
+                <clojure.test.declared.namespace.only>true</clojure.test.declared.namespace.only>
+            </properties>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <configuration>
+                                <skipTests>true</skipTests>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+        <profile>
+            <id>externals</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+        <profile>
+            <id>examples</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+    </profiles>
+
+    <distributionManagement>
+        <site>
+            <id>storm.maven.website</id>
+            <name>Storm Website</name>
+            <url>file:///tmp/site</url>
+        </site>
+    </distributionManagement>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.glassfish.jersey</groupId>
+                <artifactId>jersey-bom</artifactId>
+                <version>${jersey.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.activation</groupId>
+                <artifactId>jakarta.activation</artifactId>
+                <version>${jakarta-activation-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.activation</groupId>
+                <artifactId>jakarta.activation-api</artifactId>
+                <version>${jakarta-activation-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>${jakarta-jaxb-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.xml.bind</groupId>
+                <artifactId>jaxb-api</artifactId>
+                <version>${jaxb-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.activation</groupId>
+                <artifactId>activation</artifactId>
+                <version>${activation-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hdrhistogram</groupId>
+                <artifactId>HdrHistogram</artifactId>
+                <version>${hdrhistogram.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.clojure</groupId>
+                <artifactId>clojure</artifactId>
+                <version>${clojure.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.esotericsoftware</groupId>
+                <artifactId>kryo</artifactId>
+                <version>${kryo.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-cli</groupId>
+                <artifactId>commons-cli</artifactId>
+                <version>${commons-cli.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>${commons-compress.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-exec</artifactId>
+                <version>${commons-exec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-collections</groupId>
+                <artifactId>commons-collections</artifactId>
+                <version>${commons-collections.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-lang</groupId>
+                <artifactId>commons-lang</artifactId>
+                <version>${commons-lang.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>jline</groupId>
+                <artifactId>jline</artifactId>
+                <version>${jline.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper</artifactId>
+                <version>${zookeeper.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.sun.jmx</groupId>
+                        <artifactId>jmxri</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.sun.jdmk</groupId>
+                        <artifactId>jmxtools</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>javax.jms</groupId>
+                        <artifactId>jms</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper-jute</artifactId>
+                <version>${zookeeper.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>${servlet.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>joda-time</groupId>
+                <artifactId>joda-time</artifactId>
+                <version>${joda-time.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>commons-fileupload</groupId>
+                <artifactId>commons-fileupload</artifactId>
+                <version>${commons-fileupload.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${commons-codec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-framework</artifactId>
+                <version>${curator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-recipes</artifactId>
+                <version>${curator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-client</artifactId>
+                <version>${curator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-test</artifactId>
+                <version>${curator.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.googlecode.json-simple</groupId>
+                <artifactId>json-simple</artifactId>
+                <version>${json-simple.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-bom</artifactId>
+                <version>${jetty.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>org.clojure</groupId>
+                <artifactId>tools.logging</artifactId>
+                <version>${clojure.tools.logging.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.twitter</groupId>
+                <artifactId>carbonite</artifactId>
+                <version>${carbonite.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jctools</groupId>
+                <artifactId>jctools-core</artifactId>
+                <version>${jctools.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jgrapht</groupId>
+                <artifactId>jgrapht-core</artifactId>
+                <version>${jgrapht.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.auto.service</groupId>
+                <artifactId>auto-service</artifactId>
+                <version>${auto-service.version}</version>
+                <optional>true</optional>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-bom</artifactId>
+                <version>${log4j.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>log4j-over-slf4j</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-core</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-graphite</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-jvm</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-junit-jupiter</artifactId>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.awaitility</groupId>
+                <artifactId>awaitility</artifactId>
+                <version>${awaitility.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>java-hamcrest</artifactId>
+                <version>${hamcrest.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.thrift</groupId>
+                <artifactId>libthrift</artifactId>
+                <version>${thrift.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <!-- used by examples/storm-starter -->
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.jupiter.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.calcite</groupId>
+                <artifactId>calcite-core</artifactId>
+                <version>${calcite.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-clients</artifactId>
+                <version>${storm.kafka.client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>uk.org.lidalia</groupId>
+                <artifactId>sysout-over-slf4j</artifactId>
+                <version>${sysout-over-slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.annotation</groupId>
+                <artifactId>javax.annotation-api</artifactId>
+                <version>1.3.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.rocksdb</groupId>
+                <artifactId>rocksdbjni</artifactId>
+                <version>${rocksdb-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.activemq</groupId>
+                <artifactId>activemq-client</artifactId>
+                <version>${activemq.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.activemq</groupId>
+                <artifactId>activemq-broker</artifactId>
+                <version>${activemq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.activemq</groupId>
+                <artifactId>activemq-mqtt</artifactId>
+                <version>${activemq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.activemq</groupId>
+                <artifactId>activemq-kahadb-store</artifactId>
+                <version>${activemq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.activemq</groupId>
+                <artifactId>activemq-all</artifactId>
+                <version>${activemq.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!-- Hadoop dependencies. Specified here so HDFS/HBase don't import older versions of these jars in their projects-->
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-auth</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-hdfs</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-common</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-annotations</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-mapreduce-client-core</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-yarn-common</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-yarn-server-resourcemanager</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-yarn-server-applicationhistoryservice</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-yarn-server-web-proxy</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-yarn-registry</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-archives</artifactId>
+                <version>${hadoop.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <repositories>
+        <repository>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>central</id>
+            <url>https://repo1.maven.org/maven2/</url>
+        </repository>
+        <repository>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <id>clojars</id>
+            <url>https://clojars.org/repo/</url>
+        </repository>
+    </repositories>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${surefire.version}</version>
+                    <configuration>
+                        <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                        <excludedGroups>IntegrationTest | ${java.unit.test.exclude.groups}</excludedGroups>
+                        <argLine>-Xmx3g -XX:+HeapDumpOnOutOfMemoryError</argLine>
+                        <trimStackTrace>false</trimStackTrace>
+                        <forkCount>1.0C</forkCount>
+                        <reuseForks>true</reuseForks>
+                        <systemPropertyVariables>
+                            <storm.home>${project.basedir}/target/testhome</storm.home>
+                        </systemPropertyVariables>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>${surefire.version}</version>
+                    <configuration>
+                        <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                        <includes>
+                            <include>**/*.java</include>
+                        </includes>
+                        <groups>IntegrationTest</groups>
+                        <argLine>-Xmx1536m</argLine>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <!--To support checkstyle goals. For example: "mvn checkstyle:checkstyle"-->
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>3.0.0</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.apache.storm</groupId>
+                            <artifactId>storm-checkstyle</artifactId>
+                            <version>${project.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>com.puppycrawl.tools</groupId>
+                            <artifactId>checkstyle</artifactId>
+                            <!-- If you change this, you should also update the storm_checkstyle.xml file to be
+                            based on the google_checks.xml from the version of checkstyle you are choosing. -->
+                            <version>8.2</version>
+                        </dependency>
+                    </dependencies>
+                    <executions>
+                        <execution>
+                            <id>validate</id>
+                            <phase>validate</phase>
+                            <configuration>
+                                <configLocation>storm/storm_checkstyle.xml</configLocation>
+                                <encoding>UTF-8</encoding>
+                                <failOnViolation>true</failOnViolation>
+                                <logViolationsToConsole>true</logViolationsToConsole>
+                                <consoleOutput>true</consoleOutput>
+                                <outputFile>target/checkstyle-violation.xml</outputFile>
+                                <violationSeverity>warning</violationSeverity>
+                            </configuration>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>3.12.0</version>
+                    <configuration>
+                        <rulesets>
+                            <ruleset>storm/pmd-ruleset.xml</ruleset>
+                        </rulesets>
+                        <includeTests>true</includeTests>
+                        <printFailingErrors>true</printFailingErrors>
+                        <excludes>
+                            <exclude>org/apache/storm/generated/**</exclude>
+                            <exclude>org/apache/storm/sql/parser/impl/**</exclude>
+                        </excludes>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>pmd-check</id>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.apache.storm</groupId>
+                            <artifactId>storm-checkstyle</artifactId>
+                            <version>${project.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>2.5</version>
+                    <executions>
+                        <execution>
+                            <id>cleanup</id>
+                            <phase>clean</phase>
+                            <goals>
+                                <goal>clean</goal>
+                            </goals>
+                            <configuration>
+                                <excludeDefaultDirectories>true</excludeDefaultDirectories>
+                                <filesets>
+                                    <fileset>
+                                        <directory>./logs/</directory>
+                                    </fileset>
+                                </filesets>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>com.theoryinpractise</groupId>
+                    <artifactId>clojure-maven-plugin</artifactId>
+                    <version>1.7.1</version>
+                    <extensions>true</extensions>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>1.6.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>license-maven-plugin</artifactId>
+                    <version>2.0.0</version>
+                    <configuration>
+                        <useMissingFile>true</useMissingFile>
+                        <failOnMissing>true</failOnMissing>
+                        <includeTransitiveDependencies>true</includeTransitiveDependencies>
+                        <fileTemplate>/org/codehaus/mojo/license/third-party-file-groupByMultiLicense.ftl</fileTemplate>
+                        <excludedScopes>system,test</excludedScopes>
+                        <excludedGroups>${project.groupId}</excludedGroups>
+                        <licenseMerges>
+                            <licenseMerge>
+                                Apache License, Version 2.0 |
+                                Apache License, version 2.0 |
+                                Apache License Version 2 |
+                                Apache License Version 2.0 |
+                                Apache License version 2.0 |
+                                Apache 2 |
+                                Apache 2.0 |
+                                Apache License, 2.0 |
+                                Apache License 2 |
+                                Apache License 2.0 |
+                                Apache Public License 2.0 |
+                                Apache Software License - Version 2.0 |
+                                Apache v2 |
+                                ASL, version 2 |
+                                The Apache License, Version 2.0 |
+                                The Apache Software License, Version 2.0
+                            </licenseMerge>
+                            <licenseMerge>
+                                Apache License |
+                                Apache Software Licenses
+                            </licenseMerge>
+                            <licenseMerge>
+                                BSD License |
+                                BSD license |
+                                BSD |
+                                The BSD License
+                            </licenseMerge>
+                            <licenseMerge>
+                                BSD 3-Clause License |
+                                BSD 3-Clause |
+                                BSD 3-clause |
+                                The BSD 3-Clause License |
+                                New BSD License |
+                                New BSD license
+                            </licenseMerge>
+                            <licenseMerge>
+                                Common Development and Distribution License (CDDL) v1.0 |
+                                COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0 |
+                                CDDL 1.0
+                            </licenseMerge>
+                            <licenseMerge>
+                                Common Development and Distribution License (CDDL) v1.1 |
+                                COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.1 |
+                                CDDL 1.1 |
+                                Common Development and Distribution License (CDDL), Version 1.1
+                            </licenseMerge>
+                            <licenseMerge>
+                                Common Development and Distribution License |
+                                <!-- Multilicense, choosing CDDL -->
+                                CDDL+GPL |
+                                CDDL+GPL License |
+                                CDDL + GPLv2 with classpath exception
+                            </licenseMerge>
+                            <licenseMerge>
+                                Eclipse Public License, Version 1.0 |
+                                Eclipse Public License 1.0 |
+                                Eclipse Public License - v 1.0
+                            </licenseMerge>
+                            <licenseMerge>
+                                Eclipse Public License, Version 2.0 |
+                                EPL-2.0 |
+                                EPL 2.0
+                            </licenseMerge>
+                            <licenseMerge>
+                                Eclipse Distribution License, Version 1.0 |
+                                Eclipse Distribution License - v 1.0 |
+                                EDL 1.0
+                            </licenseMerge>
+                            <licenseMerge>
+                                MIT License |
+                                The MIT License |
+                                MIT license |
+                                MIT X11 License |
+                                MIT
+                            </licenseMerge>
+                            <licenseMerge>
+                                The GNU General Public License (GPL), Version 2, With Classpath Exception |
+                                GPL2 w/ CPE
+                            </licenseMerge>
+                            <licenseMerge>
+                                GNU Lesser General Public License (LGPL), Version 2.1 |
+                                LGPL, version 2.1 |
+                                GNU Lesser General Public License Version 2.1 |
+                                GNU Lesser General Public License, version 2.1
+                            </licenseMerge>
+                            <licenseMerge>
+                                Common Public License Version 1.0 |
+                                Common Public License - v 1.0
+                            </licenseMerge>
+                        </licenseMerges>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <tagNameFormat>v@{project.version}</tagNameFormat>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.theoryinpractise</groupId>
+                <artifactId>clojure-maven-plugin</artifactId>
+                <extensions>true</extensions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <doclet>ch.raffael.doclets.pegdown.PegdownDoclet</doclet>
+                    <docletArtifact>
+                        <groupId>ch.raffael.pegdown-doclet</groupId>
+                        <artifactId>pegdown-doclet</artifactId>
+                        <version>1.1</version>
+                    </docletArtifact>
+                    <useStandardDocletOptions>true</useStandardDocletOptions>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-maven-version</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>3.5</version>
+                                </requireMavenVersion>
+                                <bannedDependencies>
+                                    <excludes>
+                                        <!-- STORM-3114 -->
+                                        <exclude>jdk.tools:jdk.tools:*</exclude>
+                                    </excludes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <inherited>false</inherited>
+                <configuration>
+                    <missingFile>${project.basedir}/THIRD-PARTY.properties</missingFile>
+                    <aggregateMissingLicensesFile>${project.basedir}/THIRD-PARTY.properties</aggregateMissingLicensesFile>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>generate-and-check-licenses</id>
+                        <goals>
+                            <goal>aggregate-add-third-party</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>download-licenses</id>
+                        <goals>
+                            <goal>aggregate-download-licenses</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.4</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>2.19.1</version>
+                <configuration>
+                    <reportsDirectories>
+                        <file>${project.build.directory}/test-reports</file>
+                        <file>${project.build.directory}/surefire-reports</file>
+                    </reportsDirectories>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>taglist-maven-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <tagListOptions>
+                        <tagClasses>
+                            <tagClass>
+                                <displayName>Todo Work</displayName>
+                                <tags>
+                                    <tag>
+                                        <matchString>TODO</matchString>
+                                        <matchType>exact</matchType>
+                                    </tag>
+                                    <tag>
+                                        <matchString>FIXME</matchString>
+                                        <matchType>exact</matchType>
+                                    </tag>
+                                </tags>
+                            </tagClass>
+                        </tagClasses>
+                    </tagListOptions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
+</project>

@@ -1,0 +1,117 @@
+#=============================================================================
+#===== This playbook installs and runs kafka on the a given cluster  =========
+#=============================================================================
+- name: Prepare Kafka installation
+  hosts: localhost
+  gather_facts: false
+  tasks:
+
+  - name: Add rules to {{cluster_name}}_sec_group
+    os_security_group_rule:
+        security_group: "{{cluster_name}}_sec_group"
+        protocol: "{{item.protocol}}"
+        port_range_min: "{{item.port}}"
+        port_range_max: "{{ item.port}}"
+        remote_ip_prefix: 0.0.0.0/0
+        direction: "{{item.direction}}"
+    with_items:
+      - { direction: ingress, protocol: tcp, port: 9092 }
+      - { direction: egress, protocol: tcp, port: 9092 }
+    when: is_openstack == "true"
+    ignore_errors: yes
+
+- name: Installing Kafka on master
+  hosts: master
+  gather_facts: yes
+  become: true
+  tasks:
+  - name: Get Kafka
+    unarchive:
+      src: https://archive.apache.org/dist/kafka/3.1.0/kafka_2.12-3.1.0.tgz
+      dest: "{{remote_prefix}}"
+      remote_src: yes
+      owner: "{{user}}"
+
+  - name: Rename Kafka directory
+    command: mv "{{remote_prefix}}/kafka_2.12-3.1.0" "{{remote_prefix}}/kafka"
+
+  - name: Update log path
+    replace:
+      path: "{{remote_prefix}}/kafka/config/server.properties"
+      regexp: 'log.dirs=(.+)'
+      replace: 'log.dirs=/tmp/kafka'
+
+  - name: Update kafka server port
+    lineinfile:
+      dest: "{{remote_prefix}}/kafka/config/server.properties"
+      line: "port = 9092"
+
+  - name: Update kafka server name
+    lineinfile:
+      dest: "{{remote_prefix}}/kafka/config/server.properties"
+      line: "advertised.host.name = {{hostvars[inventory_hostname].ansible_hostname}}"
+
+  - name: Update log retention time, otherwise we might quickly run out of disk
+    lineinfile:
+      dest: "{{remote_prefix}}/kafka/config/server.properties"
+      regexp: 'log.retention.hours'
+      line: " log.retention.ms=300000"
+
+  # Probably not needed but maybe important later
+  #- name: Update Zookeeper-Connect string that is intially set on localhost to new value
+  #  lineinfile:
+  #    dest: "{{remote_prefix}}/kafka/config/server.properties"
+  #    regexp: 'zookeeper.connect'
+  #    line: 'zookeeper.connect={{hostvars[inventory_hostname].ansible_hostname}}:2181'
+
+  - name: Create logdir in tmp
+    file:
+      path: "/tmp/kafka"
+      state: directory
+      owner: "{{user}}"
+
+  - name: Create logdir
+    become: yes
+    file:
+      path: "{{remote_prefix}}/kafka/logs"
+      state: directory
+      owner: "{{user}}"
+
+  - name: Create a service file for Kafka
+    become: yes
+    copy:
+      dest: /etc/systemd/system/kafka.service
+      content: |
+        [Service]
+        Type=simple
+        ExecStart=/bin/sh -c '{{remote_prefix}}/kafka/bin/kafka-server-start.sh {{remote_prefix}}/kafka/config/server.properties > {{remote_prefix}}/kafka/logs/kafka.log 2>&1'
+        ExecStop={{remote_prefix}}/kafka/bin/kafka-server-stop.sh
+        Restart=on-abnormal
+        User={{user}}
+        Group={{group}}
+        
+        [Install]
+        WantedBy=multi-user.target
+
+  - name: Reload daemon
+    become: true
+    systemd:
+      daemon_reload: yes
+
+  - name: Start Kafka
+    become: true
+    systemd:
+      name: 'kafka'
+      state: started
+      enabled: yes
+
+  - name: Validate if Kafka is up and listening on port 9092
+    wait_for:
+      host: "{{item}}"
+      port: 9092
+      delay: 10
+      timeout: 30
+      state: started
+      msg: "Kafka not seem to be running"
+    with_inventory_hostnames:
+      - master

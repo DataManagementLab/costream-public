@@ -1,0 +1,115 @@
+#=============================================================================
+#===== This playbook installs and runs Zookeeper on a given cluster  =========
+#=============================================================================
+- name: Allow security groups for zookeeper
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Add ingress rules to the security group
+    os_security_group_rule:
+        security_group: "{{cluster_name}}_sec_group"
+        protocol: "{{ item.protocol }}"
+        port_range_min: "{{ item.port }}"
+        port_range_max: "{{ item.port }}"
+        remote_ip_prefix: 0.0.0.0/0
+        direction: "{{ item.direction }}"
+    with_items:
+      - { direction: ingress, protocol: tcp, port: 2181 }
+    when: is_openstack == "true"
+    ignore_errors: yes
+
+- name: Installing und running zookeeper
+  hosts: servers
+  become: true
+  gather_facts: false
+  tasks:
+
+  - name: Check if zookeeper already exists
+    stat:
+      path: "{{remote_prefix}}/zookeeper"
+    register: zookeeper_path
+
+  - name: Get zookeeper
+    unarchive:
+      src: https://archive.apache.org/dist/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz
+      dest: "{{ remote_prefix }}"
+      remote_src: yes
+      owner: "{{user}}"
+      group: "{{group}}"
+    when: zookeeper_path.stat.exists == False
+
+  # Rename the folder
+  - name: Copy the zookeeper files into existing zookeeper folder
+    command: sudo cp -Rp {{ remote_prefix }}/apache-zookeeper-3.6.2-bin/. {{ remote_prefix }}/zookeeper/
+    when: not zookeeper_path.stat.exists
+
+  # Remove old target folder
+  - name: Remove empty archive folder
+    file:
+      path: "{{ remote_prefix }}/apache-zookeeper-3.6.2-bin/"
+      state: absent
+
+  - name: Change Owner of full directory
+    shell: sudo chown -R "{{user}}" "{{ remote_prefix }}"/zookeeper
+
+  - name: Add ZK-directory to $PATH.
+    copy:
+      dest: /etc/profile.d/zookeeper-path.sh
+      content: 'PATH=$PATH:{{ remote_prefix }}/zookeeper/bin/'
+
+- name: Starting Zookeeper on master
+  hosts: master
+  gather_facts: false
+  become: true
+  tasks:
+  - name: Create tmp directory
+    file:
+      path: /tmp/zookeeper
+      state: directory
+      owner: "{{user}}"
+      group: "{{group}}"
+
+  - name: Use standard config-file (copy and rename sample)
+    shell: cp "{{ remote_prefix }}"/zookeeper/conf/zoo_sample.cfg "{{ remote_prefix }}"/zookeeper/conf/zoo.cfg
+
+  - name: Create a service file for Zookeeper
+    become: yes
+    copy:
+      dest: /etc/systemd/system/zookeeper.service
+      content: |
+        [Unit]
+        Description=Start Zookeeper
+        
+        [Service]
+        Type=forking
+        ExecStart={{remote_prefix}}/zookeeper/bin/zkServer.sh start {{remote_prefix}}/zookeeper/conf/zoo.cfg
+        ExecStop={{remote_prefix}}/zookeeper/bin/zkServer.sh stop {{remote_prefix}}/zookeeper/conf/zoo.cfg
+        ExecRestart={{remote_prefix}}/zookeeper/bin/zkServer.sh restart {{remote_prefix}}/zookeeper/conf/zoo.cfg
+        User={{user}}
+        Group={{group}}
+        
+        [Install]
+        WantedBy=multi-user.target
+
+  - name: Reload daemon
+    become: true
+    systemd:
+      daemon_reload: yes
+
+  - name: Start Zookeeper
+    systemd: state=started name=zookeeper daemon_reload=yes
+    become: true
+
+  - name: Validate if Zookeeper is up and listening on port 2181
+    wait_for:
+      host: "{{item}}"
+      port: 2181
+      delay: 10
+      timeout: 30
+      state: started
+      msg: "Zookeeper not seem to be running"
+    with_inventory_hostnames:
+      - master
+
+  - debug:
+      msg: "Zookeeper is installed and runs now"

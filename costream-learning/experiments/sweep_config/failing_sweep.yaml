@@ -1,0 +1,22 @@
+command:
+- ${env}
+- python3
+- ${program}
+- --training_data 
+-  ./training_data/training_data_full
+- --sync
+- --config
+- ./sweep_config/failing_sweep.ini
+- --device
+- cuda
+program: ./main.py
+method: bayes
+metric:
+  name: val_accuracy
+  goal: maximize
+parameters:
+  lr:
+    min: 0.00001
+    max: 0.001
+  activation_class_name:
+    values: ["LeakyReLU", "CELU", "SELU", "ELU"]

@@ -1,0 +1,272 @@
+<configuration monitorInterval="60" shutdownHook="disable">
+    <properties>
+        <property name="standard">%d{yyyy-MM-dd HH:mm:ss.SSS} %c{1.} %t [%p] %msg%n</property>
+        <property name="noTime">%msg%n</property>
+        <property name="localPath">${sys:logDir}</property>
+    </properties>
+    <appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5p %c{1.} - %msg%n"/>
+        </Console>
+
+        <RollingFile name="main.log"
+                     fileName="${localPath}/main.log"
+                     filePattern="${localPath}/main.log.%i.gz"
+                     append="false"
+                     createOnDemand="true">
+            <PatternLayout>
+                <pattern>${standard}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+
+        <RollingFile name="zookeeper.log"
+                     fileName="${localPath}/zookeeper.log"
+                     filePattern="${localPath}/zookeeper.log.%i.gz"
+                     append="false"
+                     createOnDemand="true">
+            <PatternLayout>
+                <pattern>${standard}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+
+        <RollingFile name="mongo.log"
+                     fileName="${localPath}/mongo.log"
+                     filePattern="${localPath}/mongo.log.%i.gz"
+                     append="false"
+                     createOnDemand="true">
+            <PatternLayout>
+                <pattern>${standard}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+
+        <RollingFile name="storm.log"
+                     fileName="${localPath}/storm.log"
+                     filePattern="${localPath}/storm.log.%i.gz"
+                     append="false"
+                     createOnDemand="true">
+            <PatternLayout>
+                <pattern>${standard}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+
+        <RollingFile name="observation.log"
+                     fileName="${localPath}/observation.log"
+                     filePattern="${localPath}/observation.log.%i.gz"
+                     append="false"
+                     createOnDemand="true">
+            <PatternLayout>
+                <pattern>${noTime}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+
+        <RollingFile name="graph-builder.log"
+                     fileName="${localPath}/graph-builder.log"
+                     filePattern="${localPath}/graph-builder.log.%i.gz"
+                     append="false"
+                     createOnDemand="true">
+            <PatternLayout>
+                <pattern>${standard}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+
+        <RollingFile name="load-gen.log"
+                     fileName="${localPath}/load-generator.log"
+                     filePattern="${localPath}/load-generator.log.%i.gz"
+                     append="false"
+                     createOnDemand="true">
+            <PatternLayout>
+                <pattern>${standard}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+
+        <RollingFile name="grouping.log"
+                     fileName="${localPath}/grouping.log"
+                     filePattern="${localPath}/grouping.log.%i.gz"
+                     append="false"
+                     createOnDemand="true">
+            <PatternLayout>
+                <pattern>${noTime}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+
+        <RollingFile name="placement.log"
+                     fileName="${localPath}/placement.log"
+                     filePattern="${localPath}/placement.log.%i.gz"
+                     append="false"
+                     createOnDemand="true">
+            <PatternLayout>
+                <pattern>${noTime}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+
+        <RollingFile name="labels.log"
+                     fileName="${localPath}/labels.log"
+                     filePattern="${localPath}/labels.log.%i.gz"
+                     append="false"
+                     createOnDemand="true">
+            <PatternLayout>
+                <pattern>${noTime}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+
+        <RollingFile name="kafka.log"
+                     fileName="${localPath}/kafka.log"
+                     filePattern="${localPath}/kafka.log.%i.gz"
+                     append="false"
+                     createOnDemand="true">
+            <PatternLayout>
+                <pattern>${standard}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+
+        <RollingFile name="kafka-system.log"
+                     fileName="${localPath}/kafka-system.log"
+                     filePattern="${localPath}/kafka-system.log.%i.gz"
+                     append="false"
+                     createOnDemand="true">
+            <PatternLayout>
+                <pattern>${standard}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+
+        <RollingFile name="offsets.log"
+                     fileName="${localPath}/offsets.log"
+                     filePattern="${localPath}/offsets.log.%i.gz"
+                     append="false"
+                     createOnDemand="true">
+            <PatternLayout>
+                <pattern>${noTime}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+
+        <!-- Only for local mode here - for distributed mode, this needs to be set in cluster.xsl -->
+        <RollingFile name="scheduler.log"
+                     fileName="${localPath}/scheduler.log"
+                     filePattern="${localPath}/scheduler.log.%i.gz"
+                     append="false"
+                     createOnDemand="true">
+            <PatternLayout>
+                <pattern>${standard}</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+    </appenders>
+
+    <loggers>
+        <Logger name="org.apache.zookeeper" level="OFF"/>
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+        </Root>
+
+        <logger name="scheduler" additivity="false">
+            <appender-ref ref="scheduler.log"/>
+        </logger>
+
+        <logger name="main" additivity="false">
+            <appender-ref ref="main.log"/>
+        </logger>
+
+        <logger name="org.apache.kafka" additivity="false">
+            <appender-ref ref="kafka-system.log"/>
+        </logger>
+
+        <logger name="org.apache.storm" additivity="false">
+            <appender-ref ref="storm.log"/>
+        </logger>
+
+        <logger name="org.mongodb" additivity="false">
+            <appender-ref ref="mongo.log"/>
+        </logger>
+
+        <logger name="offsets" additivity="false">
+            <appender-ref ref="offsets.log"/>
+        </logger>
+
+        <logger name="load-gen" additivity="false">
+            <appender-ref ref="load-gen.log"/>
+        </logger>
+
+        <logger name="graph-builder" additivity="false">
+            <appender-ref ref="graph-builder.log"/>
+        </logger>
+
+        <logger name="observation" additivity="false">
+            <appender-ref ref="observation.log"/>
+        </logger>
+
+        <logger name="kafka" additivity="false">
+            <appender-ref ref="kafka.log"/>
+        </logger>
+
+        <logger name="labels" additivity="false">
+            <appender-ref ref="labels.log"/>
+        </logger>
+
+        <logger name="org.apache.zookeeper" additivity="false">
+            <appender-ref ref="zookeeper.log"/>
+        </logger>
+
+        <logger name="placement" additivity="false">
+            <appender-ref ref="placement.log"/>
+        </logger>
+
+        <logger name="grouping" additivity="false">
+            <appender-ref ref="grouping.log"/>
+        </logger>
+    </loggers>
+</configuration>

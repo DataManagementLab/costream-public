@@ -1,0 +1,42 @@
+- name: Get offline parameters
+  hosts: master
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Clear old NW features
+      community.mongodb.mongodb_shell:
+        login_host: "{{ansible_hostname}}"
+        login_user: "{{mongo_user}}"
+        login_password: "{{mongo_password}}"
+        login_database: "{{mongo_database}}"
+        db: "{{mongo_database}}"
+        eval: "db.nw_params.drop();"
+      with_inventory_hostnames:
+        - master
+      ignore_errors: yes
+
+- name: Get offline parameters
+  hosts: servers
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Run iperf server
+      command: iperf3 --server --daemon --port 5001
+
+    - name: Check of iperf running
+      shell: ps aux | grep iperf3
+      register: iperf_running
+
+    - name: Run measurements on all other hosts to the corresponding iperf-server
+      shell:  "mongo -u {{mongo_user}} -p {{mongo_password}} --authenticationDatabase {{mongo_database}} mongodb://{{hostvars[groups['master'][0]].ansible_hostname}}/{{mongo_database}} \
+          --eval \"db.nw_params.insert({ \
+           source: '{{ansible_hostname}}', \
+           target: '{{hostvars[item].ansible_hostname}}', \
+           bandwidth: `iperf3 -f 'm' -c {{hostvars[item].ansible_hostname}} | tail -n 1 | rev | cut -d' ' -f 2 | rev` \
+           });\""
+      register: iperf_test
+      failed_when: "'failed' in iperf_test.stderr"
+      with_items:  "{{groups['servers']}}"
+      loop_control:
+        pause: 15 # pause needed as the measurement takes 10 seconds
+      when: hostvars[inventory_hostname].inventory_hostname != hostvars[item]['inventory_hostname']

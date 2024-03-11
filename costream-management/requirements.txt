@@ -1,0 +1,7 @@
+argparse
+ansible_runner
+configparser
+openstacksdk==0.52
+python-openstackclient
+shade
+ansible

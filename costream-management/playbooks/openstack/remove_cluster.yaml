@@ -1,0 +1,42 @@
+#=============================================================================
+#=========== This playbook deletes all the server infastructure ==============
+#=============================================================================
+
+- name: Remove server infastructure
+  gather_facts: False
+  hosts: localhost
+  tasks:
+
+  - name: Remove all instances of {{cluster_name}}
+    os_server:
+      name: "{{cluster_name}}{{item}}"
+      state: absent
+    with_sequence: start=0 end="{{ node_count|int - 1 }}"
+    ignore_errors: yes
+
+  - name: Remove {{cluster_name}}router
+    os_router:
+      name: "{{cluster_name}}router"
+      state: absent
+    ignore_errors: yes
+
+  - name: Remove {{cluster_name}}_network
+    os_network:
+      name: "{{cluster_name}}_network"
+      state: absent
+    ignore_errors: yes
+
+  - name: Remove {{cluster_name}}_sec_group
+    os_security_group:
+      state: absent
+      name: "{{cluster_name}}_sec_group"
+
+  - name: Remove {{ cluster_name }}_key
+    os_keypair:
+        state: absent
+        name: "{{cluster_name}}_key"
+
+  - name: Remove config files
+    file:
+      path: "{{ssh_files_path}}/{{cluster_name}}"
+      state: absent

@@ -1,7 +1,7 @@
 # COSTREAM
 
 
-This is the source code of our (Roman Heinrich, Carsten Binnig, Harald Kornmayer and Manisha Luthra) published paper at ICDE 2024: "COSTREAM: Learned Cost Model for Operator Placement in Edge-Cloud Environments"
+This is the source code of our (Roman Heinrich, Carsten Binnig, Harald Kornmayer and Manisha Luthra) published paper at ICDE 2024: "COSTREAM: A Learned Cost Model for Operator Placement in Edge-Cloud Environments"
 
 ## Abstract
 In this work, we present COSTREAM, a novel learned cost model for Distributed Stream Processing Systems that provides accurate predictions of the execution costs of

@@ -33,8 +33,6 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 
-import costream.plan.executor.main.Constants;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -132,6 +130,55 @@ public class KafkaSpout<K, V> extends BaseRichSpout {
     private final ArrayList<Long> e2eTimeStamps;
     private final ArrayList<Long> procTimeStamps;
 
+    interface MongoConstants {
+        String MONGO_ADDRESS = "mongo.address";
+        String MONGO_PORT = "mongo.port";
+    }
+
+    interface Mongo {
+        String MONGO_DATABASE = "dsps";
+        String MONGO_USER = "dsps_mongo";
+        String MONGO_PASSWORD = "s3cure!";
+    }
+
+    interface QueryProperties {
+        String JVM_SIZE = "jvmSize";
+        String QUERY = "query";
+        String CLUSTER = "cluster";
+        String MODE = "mode";
+        String DURATION = "duration";
+        String EVENT_RATE = "eventRate";
+        String WINDOW_LENGTH = "windowLength";
+        String TUPLE_WIDTH = "tupleWidth";
+        String COMMON_RAM = "common-ram";
+        String COMMON_CPU = "common-cpu";
+        String COMMON_BANDWIDTH = "common-bandwidth";
+        String COMMON_LATENCY = "common-latency";
+    }
+
+    interface OperatorProperties {
+        String OPERATOR_TYPE = "operatorType";
+        String COMPONENT = "component";
+
+        String TOPIC = "topic";
+        String CONSUMER_POSITION = "consumer";
+        String PRODUCER_POSITION = "producer";
+        String OFFSET = "offset";
+        String KAFKA_DURATION = "kafkaDuration";
+    }
+
+    interface QueryLabels {
+        String PRODUCER_INTERVAL = "producer-interval";
+        String INGESTION_INTERVAL = "ingestion-interval";
+        String THROUGHPUT = "throughput";
+        String TPT_MEAN = "throughput-mean";
+        String E2E_MEAN = "e2e-mean";
+        String PROC_MEAN = "proc-mean";
+        String E2ELATENCY = "e2e-latency";
+        String PROCLATENCY = "proc-latency";
+        String COUNTER = "counter";
+    }
+
     public KafkaSpout(KafkaSpoutConfig<K, V> kafkaSpoutConfig) {
         this(kafkaSpoutConfig, new ConsumerFactoryDefault<>(), new TopicAssigner(), null, true, null);
     }
@@ -163,9 +210,9 @@ public class KafkaSpout<K, V> extends BaseRichSpout {
     public void open(Map<String, Object> conf, TopologyContext context, SpoutOutputCollector collector) {
         if (!this.localExecution) {
             MongoCredential credential = MongoCredential.createCredential(
-                    Constants.Mongo.MONGO_USER,
-                    Constants.Mongo.MONGO_DATABASE,
-                    Constants.Mongo.MONGO_PASSWORD.toCharArray());
+                    Mongo.MONGO_USER,
+                    Mongo.MONGO_DATABASE,
+                    Mongo.MONGO_PASSWORD.toCharArray());
 
             this.mongoClient = new MongoClient(
                     new ServerAddress((String) config.get("mongo.address"), (int) config.get("mongo.port")),
@@ -782,12 +829,12 @@ public class KafkaSpout<K, V> extends BaseRichSpout {
             if (localExecution) {
                 // writing offsets
                 Document document = new Document();
-                document.put(Constants.QueryProperties.QUERY, queryName);
-                document.put(Constants.OperatorProperties.CONSUMER_POSITION, position);
-                document.put(Constants.OperatorProperties.TOPIC, topic);
-                document.put(Constants.OperatorProperties.COMPONENT, componentId);
-                document.put(Constants.QueryLabels.INGESTION_INTERVAL, meanIngestionInterval);
-                document.put(Constants.QueryLabels.PRODUCER_INTERVAL, meanProducerInterval);
+                document.put(QueryProperties.QUERY, queryName);
+                document.put(OperatorProperties.CONSUMER_POSITION, position);
+                document.put(OperatorProperties.TOPIC, topic);
+                document.put(OperatorProperties.COMPONENT, componentId);
+                document.put(QueryLabels.INGESTION_INTERVAL, meanIngestionInterval);
+                document.put(QueryLabels.PRODUCER_INTERVAL, meanProducerInterval);
                 Logger logger = LoggerFactory.getLogger("offsets");
                 logger.info(document.toJson());
 
@@ -795,13 +842,13 @@ public class KafkaSpout<K, V> extends BaseRichSpout {
                 // log offsets
                 MongoDatabase db = mongoClient.getDatabase((String) config.get("mongo.database"));
                 MongoCollection<Document> collection = db.getCollection((String) config.get("mongo.collection.offsets"));
-                Bson filter1 = Filters.eq(Constants.QueryProperties.QUERY, queryName);
-                Bson filter2 = Filters.eq(Constants.OperatorProperties.TOPIC, topic);
+                Bson filter1 = Filters.eq(QueryProperties.QUERY, queryName);
+                Bson filter2 = Filters.eq(OperatorProperties.TOPIC, topic);
                 Bson filter = Filters.and(filter1, filter2);
-                Bson update1 = Updates.set(Constants.OperatorProperties.CONSUMER_POSITION, position);
-                Bson update2 = Updates.set(Constants.OperatorProperties.COMPONENT, componentId);
-                Bson update3 = Updates.set(Constants.QueryLabels.INGESTION_INTERVAL, meanIngestionInterval);
-                Bson update4 = Updates.set(Constants.QueryLabels.PRODUCER_INTERVAL, meanProducerInterval);
+                Bson update1 = Updates.set(OperatorProperties.CONSUMER_POSITION, position);
+                Bson update2 = Updates.set(OperatorProperties.COMPONENT, componentId);
+                Bson update3 = Updates.set(QueryLabels.INGESTION_INTERVAL, meanIngestionInterval);
+                Bson update4 = Updates.set(QueryLabels.PRODUCER_INTERVAL, meanProducerInterval);
                 collection.findOneAndUpdate(filter, update1);
                 collection.findOneAndUpdate(filter, update2);
                 collection.findOneAndUpdate(filter, update3);

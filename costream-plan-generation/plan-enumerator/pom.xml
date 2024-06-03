@@ -44,7 +44,7 @@
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
                             <mainClass>
-                                costream.plan.enumerator.PlanEnumerator
+                                de.tuda.dsps.plan.enumerator.PlanEnumerator
                             </mainClass>
                         </manifest>
                     </archive>
